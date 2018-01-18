@@ -15,7 +15,7 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'loopasvservice'
+rootProject.name = 'loopasv'
 
 include ':loopa'
 project(':loopa').projectDir = new File('../../loopa/loopa')
