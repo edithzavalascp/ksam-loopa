@@ -12,6 +12,9 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 repositories {
     mavenCentral()
 }
@@ -24,6 +27,8 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-web")
     
     compile("com.fasterxml.jackson.core:jackson-databind")
+    
+    compile("org.uma.jmetal:jmetal:5.5")
     
     compile project(':loopa')
     
