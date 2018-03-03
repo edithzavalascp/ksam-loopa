@@ -1,0 +1,692 @@
+{
+	"ksamConfig":{
+		"monitorConfig":{
+			"monMechanisms" :["push"],
+			"monOperations" :["normalize"],
+			"frequency" : null
+		},
+		"analyzerConfig":{
+			"problemId" :"StateDrivenMonitoring",
+			"analysisTechniques":[{
+				"techId":"ML",
+				"algorithms":[{
+					"algorithmId" :"IMWPP",
+					"algorithmParameters":[
+						{"modelsUpdateFrequency":120000},
+						{"predictionFrequency":1000},
+						{"minimumChangeRate":0.1}
+					],
+					"evaluationParameters":[
+						{"param3":"value"},
+						{"param2":"value"}
+					]
+			}]}
+			]
+		},
+		"plannerConfig": {
+			"planTechniques":[{
+				"techId":"MOO",
+				"algorithms":[{
+					"algorithmId" :"NSGAII",
+					"algorithmParameters":[
+						{"crossOverProbability":"value"},
+						{"rateOfNotRandomSolution":"value"},
+						{"numberOfIterations":"value"},
+						{"populationsSize":"value"}
+					],
+					"evaluationParameters":[
+						{"param1":"value"},
+						{"param2":"value"}
+					]
+			}]}]
+		},
+		"executerConfig":{
+			"adaptationType":"differential",
+			"adaptationsFormat" : "json"
+		},
+		"kbConfig":{
+			"monDatapersistenceFormat":"csv"
+			
+		}
+	},
+	"systemUnderMonitoringConfig":{
+		"systemId" : "proteusMonitor",	
+		"systemVariables": {
+			"contextVars":{
+				"states": ["SAE3HC", "SAE3TJC", "SAE3DDTFallback", "SAE1ACC", "SAE1LKA", "SAE2ACCLC"],
+				"events": ["ApproachingCity", "AdverseWeather", "MinimalRiskConditionAchieved", "SetAutonomousDriving", "HighwayChauffeurFailure", "FrontalDistanceSensorFailure"]
+			},
+			"monitorVars":{
+				"monitors": ["Device.DistanceSensor.Frontal", "Device.DistanceSensor.Rear", "Device.LaneTrackingSensor", "Device.WeatherStation", "Device.GPS", "Device.Speedometer", "Device.SteeringWheelPressureSensor", "Device.AutonomousButton", "Device.InitialConfigurationButton", "Device.BatteryLevelSensor", "Service.WeatherService.City", "Module.Navigator", "Module.OEDR"], 
+				"monitoringVars": ["FrontalDistance", "RearDistance", "LaneDetection", "Temperature", "Rain", "Snow", "Humidity", "Wind", "GPSLocationLatitute", "GPSLocationLongitud", "Speed", "HandsOnWheel", "AutonomousDriving", "SelfConfiguration", "BatteryLevel", "Roadway", "TrafficState", "HighwayChauffeurStatus"] 
+			}
+		},
+		"systemConfiguration": {
+			"contextConfig":{
+				"states": [{
+						"stateId": "SAE3HC",
+						"vars": ["FrontalDistance", "RearDistance", "LaneDetection","GPSLocation", "Snow","Temperature","Rain","Wind"],
+						"nextStates": [{
+								"nextStateId": "SAE3DDTFallback",
+								"rules": [{ 
+										"ruleId": "r1",
+										"events": ["ApproachingCity"], 
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": false
+										}]
+									},
+									{
+										"ruleId": "r2",
+										"events": ["AdverseWeather"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": false
+										}]
+									}
+								]
+							},
+							{
+								"nextStateId": "SAE1ACC",
+								"rules": [{
+										"ruleId": "r1",
+										"events": ["ApproachingCity"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": true
+										}]
+									},
+									{
+										"ruleId": "r2",
+										"events": ["AdverseWeather"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": true
+										}]
+									}
+								]
+							},
+							{
+								"nextStateId": "SAE1LKA",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["FrontalDistanceSensorFailure"],
+									"conditions": []
+								}]
+							},
+							{
+								"nextStateId": "SAE2ACCLC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["HighwayChauffeurFailure"],
+									"conditions": []
+								}]
+							}
+						]
+					},
+					{
+						"stateId": "SAE3TJC",
+						"vars": ["FrontalDistance", "RearDistance", "LaneDetection","GPSLocation", "Snow","Temperature","Rain","Wind"],
+						"nestStates": [{
+								"nextStateId": "SAE3DDTFallback",
+								"rules": [{
+										"ruleId": "r1",
+										"events": ["ApproachingCity"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": false
+										}]
+									},
+									{
+										"ruleId": "r2",
+										"events": ["AdverseWeather"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": false
+										}]
+									}
+								]
+							},
+							{
+								"nextStateId": "SAE1ACC",
+								"rules": [{
+										"ruleId": "r1",
+										"events": ["ApproachingCity"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": true
+										}]
+									},
+									{
+										"ruleId": "r2",
+										"events": ["AdverseWeather"],
+										"conditions": [{
+											"varId": "HandsOnWheel",
+											"operator": "EQUAL",
+											"value": true
+										}]
+									}
+								]
+							}
+						]
+					},
+					{
+						"stateId": "SAE3DDTFallback",
+						"vars": ["FrontalDistance", "RearDistance", "LaneDetection","GPSLocation"],
+						"nestStates": [{
+							"nextStateId": "SAE1ACC",
+							"rules": [{
+								"ruleId": "r1",
+								"events": ["MinimalRiskConditionAchieved"],
+								"conditions": []
+							}]
+						}]
+					},
+					{
+						"stateId": "SAE1ACC",
+						"vars": ["FrontalDistance", "RearDistance"],
+						"nestStates": [{
+								"nextStateId": "SAE3HC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+											"varId": "Roadway",
+											"operator": "EQUAL",
+											"value": "Highway"
+										},
+										{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "Freeflow"
+										}
+									]
+								}]
+							},
+							{
+								"nextStateId": "SAE3TJC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+											"varId": "Roadway",
+											"operator": "EQUAL",
+											"value": "Motorway"
+										},
+										{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "TrafficJam"
+										}
+									]
+								}]
+							}
+						]
+					},
+					{
+						"stateId": "SAE1LKA",
+						"vars": ["LaneDetection"],
+						"nestStates": [{
+								"nextStateId": "SAE3HC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+										"varId": "Roadway",
+										"operator": "EQUAL",
+										"value": "Highway"
+									},{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "Freeflow"
+										},
+		                                {
+											"varId": "FrontalDistance",
+											"operator": "NOT",
+											"value": "unknown"
+										}]
+								}]
+							},
+							{
+								"nextStateId": "SAE3TJC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+											"varId": "FrontalDistance",
+											"operator": "NOT",
+											"value": "unknown"
+										},
+										{
+											"varId": "Roadway",
+											"operator": "EQUAL",
+											"value": "Motorway"
+										},
+										{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "TrafficJam"
+										}
+									]
+								}]
+							}
+						]
+					},
+					{
+						"stateId": "SAE2ACCLC",
+						"vars": ["FrontalDistance", "RearDistance", "LaneDetection"],
+						"nestStates": [{
+								"nextStateId": "SAE3HC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+										"varId": "Roadway",
+										"operator": "EQUAL",
+										"value": "Highway"
+									},{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "Freeflow"
+										},
+		                                {
+											"varId": "HighwayChauffeurAck",
+											"operator": "EQUAL",
+											"value": true
+										}]
+								}]
+							},
+							{
+								"nextStateId": "SAE3TJC",
+								"rules": [{
+									"ruleId": "r1",
+									"events": ["SetAutonomousDriving"],
+									"conditions": [{
+											"varId": "HighwayChauffeurAck",
+											"operator": "EQUAL",
+											"value": true
+										},
+										{
+											"varId": "Roadway",
+											"operator": "EQUAL",
+											"value": "Motorway"
+										},
+										{
+											"varId": "TrafficState",
+											"operator": "EQUAL",
+											"value": "TrafficJam"
+										}
+									]
+								}]
+							}
+						]
+					}
+				],"events": [{
+						"eventId": "ApproachingCity",
+						"triggers": [{ 
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "GPSLocationLatitute",
+								"operator": "EQUAL",
+								"value": "x"
+							},{
+								"varId": "GPSLocationLongitud", 
+								"operator": "EQUAL",
+								"value": "x"
+							}
+							]
+						}]
+					},
+					{
+						"eventId": "AdverseWeather",
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+									"varId": "Snow",
+									"operator": "EQUAL",
+									"value": "true"
+								}]
+						},
+		                {"triggerId": "t2",
+							"conditions": [{
+									"varId": "Rain",
+									"operator": "EQUAL",
+									"value": "High"
+								}]
+		
+					}]
+					},
+					{
+						"eventId": "AdequateWeather",
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "Snow",
+								"operator": "EQUAL",
+								"value": "false"
+							}]
+						}]
+					},
+					{
+						"eventId": "MinimalRiskConditionAchieved", 
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "GPSLocationLatitute", 
+								"operator": "EQUAL", 
+								"value": "x"
+							},{
+								"varId": "GPSLocationLongitud", 
+								"operator": "EQUAL",
+								"value": "x"
+							},
+		                    {
+								"varId": "Speed",
+								"operator": "EQUAL",
+								"value": "0.0"
+							}
+		                    ]
+						}]
+					},
+					{
+						"eventId": "SetAutonomousDriving",
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "AutonomousDriving",
+								"operator": "EQUAL",
+								"value": true
+							}]
+						}]
+					},
+					{
+						"eventId": "HighwayChauffeurFailure",
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "HighwayChauffeurStatus",
+								"operator": "EQUAL",
+								"value": "-1"
+							}]
+						}]
+					},
+					{
+						"eventId": "FrontalDistanceSensorFailure",
+						"triggers": [{
+							"triggerId": "t1",
+							"conditions": [{
+								"varId": "FrontalDistance",
+								"operator": "EQUAL",
+								"value": "unknown"
+							}]
+						}]
+					}
+				]
+			},
+			"monitorConfig":{
+				"monitors": [{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.DistanceSensor.Frontal",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":25},
+							"monitoringVars": ["FrontalDistance"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.DistanceSensor.Rear",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":25},
+							"monitoringVars": ["RearDistance"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.LaneTrackingSensor",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":45},
+							"monitoringVars": ["LaneDetection"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.WeatherStation",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":2.5},
+							"monitoringVars": ["Temperature", "Rain", "Snow", "Humidity", "Wind"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.GPS",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":60},
+							"monitoringVars": ["GPSLocationLatitute", "GPSLocationLongitud"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.Speedometer",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":10},
+							"monitoringVars": ["Speed"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.SteeringWheelPressureSensor",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":1},
+							"monitoringVars": ["HandsOnWheel"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.AutonomousButton",
+							"frequency": 5000,
+							"cost": {"type":"POWER", "value":1},
+							"monitoringVars": ["AutonomousDriving"]
+						}
+					},
+					{
+						"type": "SENSOR",
+						"monitorAttributes": {
+							"monitorId": "Device.BatteryLevelSensor",
+							"frequency": 5000,
+							"cost": null,
+							"monitoringVars": ["BatteryLevel"]
+						}
+					},
+					{
+						"type": "SERVICE",
+						"monitorAttributes": {
+							"monitorId": "Service.WeatherService.City",
+							"frequency": 5000,
+							"cost": {"type":"MONEY", "value":1},
+							"monitoringVars": ["Temperature", "Rain", "Snow", "Humidity", "Wind"]
+						}
+					},
+					{
+						"type": "SERVICE",
+						"monitorAttributes": {
+							"monitorId": "Module.Navigator",
+							"frequency": 5000,
+							"cost": null,
+							"monitoringVars": ["Roadway","TrafficState"]
+						}
+					},
+					{
+						"type": "LOG",
+						"monitorAttributes": {
+							"monitorId": "Logger",
+							"monitoringVars": ["HighwayChauffeurStatus"]
+						}
+					}
+				],
+				"monitoringVars": [{
+						"varId": "TrafficState",
+						"type": "NOMINAL", 
+						"valueCharacteristics": {
+							"valueType": "STRING",
+		                    "values":["TrafficJam", "Freeflow"]
+						}
+					},
+		               {
+						"varId": "Roadway",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "STRING",
+		                    "values":["Highway", "Motorway"]
+						}
+					},
+		            {
+						"varId": "LaneDetection",
+						"type": "NUMERIC", 
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+		                    "values":[0,300]
+						}
+					},
+		             {
+						"varId": "Rain",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "STRING",
+		                    "values": ["Low", "Medium", "High"]
+						}
+					},
+		               {
+						"varId": "Snow",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "BOOLEAN"
+						}
+					},
+		             {
+						"varId": "HandsOnWheel",
+						"type": "NOMINAL", 
+						"valueCharacteristics": {
+							"valueType": "BOOLEAN"
+						}
+					},
+		             {
+						"varId": "AutonomousDriving",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "BOOLEAN"
+						}
+					},
+		            {
+						"varId": "SelfConfiguration",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "BOOLEAN"
+						}
+					},
+		              {
+						"varId": "HighwayChauffeurAck",
+						"type": "NOMINAL",
+						"valueCharacteristics": {
+							"valueType": "BOOLEAN"
+						}
+					},
+					{
+						"varId": "BatteryLevel",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "INT",
+							"values":[0,100]
+						}
+					}, 
+		            {
+						"varId": "Temperature",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[-40,150]
+						}
+					},
+		            {
+						"varId": "Humidity",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[0,100]
+						}
+					},
+		              {
+						"varId": "Wind",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[0,50]
+						}
+					},
+		            {
+						"varId": "Speed",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[0,200]
+						}
+					}, 
+		              {
+						"varId": "GPSLocationLatitute",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[-90,90]
+						}
+					}, 
+		              {
+						"varId": "GPSLocationLongitud",
+						"type": "NUMERIC",
+						"valueCharacteristics": { 
+							"valueType": "DOUBLE",
+							"values":[-180,180] 
+						}
+					},
+					{
+						"varId": "FrontalDistance",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[50,200]
+						}
+					},
+		            {
+						"varId": "RearDistance",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "DOUBLE",
+							"values":[50,200] 
+						}
+					},
+		            {
+						"varId": "HighwayChauffeurStatus",
+						"type": "NUMERIC",
+						"valueCharacteristics": {
+							"valueType": "INT",
+							"values":[-1,0]
+						}
+					}
+				]
+			}
+		}
+	}
+}

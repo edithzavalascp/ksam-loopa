@@ -1,0 +1,48 @@
+plugins {
+	id 'org.springframework.boot' version '2.0.0.RELEASE'
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'io.spring.dependency-management'
+
+compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
+
+//jar {
+//    baseName = "ksam"
+//    group    = "org.ksam"
+//    version  = "0.0.1-SNAPSHOT"
+//    manifest { attributes "Main-Class": "org.ksam.api.Application" }
+//}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter")
+    
+    compile("org.springframework:spring-web")
+    
+    compile("org.springframework.boot:spring-boot-starter-web")
+    
+    compile("com.fasterxml.jackson.core:jackson-databind")
+    
+    compile("org.uma.jmetal:jmetal:5.5")
+    
+    
+    compile project(':loopa')
+    
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+	
+    
+    testCompile("junit:junit")
+}
+
+task wrapper(type: Wrapper) {
+      gradleVersion = '4.5'
+  }
