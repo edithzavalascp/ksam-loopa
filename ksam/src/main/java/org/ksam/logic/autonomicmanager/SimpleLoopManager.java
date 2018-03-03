@@ -41,11 +41,13 @@ import org.loopa.planner.IPlanner;
 import org.loopa.planner.Planner;
 
 public class SimpleLoopManager {
-    private final static AmConfigurationManager amC = new AmConfigurationManager();
+    private final AmConfigurationManager amC;
 
-    private SimpleAutonomicManager loop;
+    private final SimpleAutonomicManager loop;
 
-    public SimpleLoopManager(String loopType) {
+    public SimpleLoopManager(String configFile) {
+
+	amC = new AmConfigurationManager(configFile);
 	/**
 	 * TODO Check loopType and create one based on the type. Currently only one type
 	 * "SimpleAutonomicManager" is supported
@@ -79,11 +81,7 @@ public class SimpleLoopManager {
 	this.loop.start();
     }
 
-    public SimpleAutonomicManager getLoop() {
+    public SimpleAutonomicManager getAMLoop() {
 	return loop;
-    }
-
-    public void setLoop(SimpleAutonomicManager loop) {
-	this.loop = loop;
     }
 }

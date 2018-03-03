@@ -18,15 +18,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AmConfigurationManager {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private final String aMConfigFile = "/application.json";
 
     private AMConfiguration config;
 
-    public AmConfigurationManager() {
+    public AmConfigurationManager(String amConfigFile) {
 	super();
 	ObjectMapper mapper = new ObjectMapper();
 	try {
-	    InputStream is = AmConfigurationManager.class.getResourceAsStream(aMConfigFile);
+	    InputStream is = AmConfigurationManager.class.getResourceAsStream(amConfigFile);
 	    LOGGER.info("" + is);
 	    StringBuilder textBuilder = new StringBuilder();
 	    try (Reader reader = new BufferedReader(

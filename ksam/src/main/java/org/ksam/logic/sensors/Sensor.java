@@ -1,5 +1,6 @@
 package org.ksam.logic.sensors;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.loopa.comm.message.IMessage;
@@ -10,18 +11,25 @@ import org.loopa.monitor.IMonitor;
 import org.loopa.monitor.sensor.ISensor;
 
 public class Sensor implements ISensor {
-    private static IMonitor m;
+    private final IMonitor m;
 
-    public static void setMonitor(IMonitor initializedM) {
+    public Sensor(IMonitor initializedM) {
 	m = initializedM;
     }
 
-    public static void processMonData(String senderID, Map<String, String> sensorData) {
+    public Map<String, String> processMonData(String senderID, String monData) {
+	Map<String, String> mapMonData = new HashMap<String, String>() {
+	    {
+		put("monData", monData);
+		put("systemId", senderID);
+	    }
+	};
 	IMessage mssg = new Message(senderID, m.getElementId(),
 		Integer.parseInt(
 			m.getElementPolicy().getPolicyContent().get(LoopAElementMessageCode.MSSGINFL.toString())),
-		MessageType.RESPONSE.toString(), sensorData);
+		MessageType.RESPONSE.toString(), mapMonData);
 	m.getReceiver().doOperation(mssg);
+	return mssg.getMessageBody();
     }
 
 }

@@ -1,28 +1,43 @@
 package org.ksam.logic.planner.configuration;
 
-import java.util.Map;
+import org.ksam.logic.configuration.IKsamElementConfig;
 
-import org.ksam.logic.configuration.KsamElementConfig;
-import org.ksam.model.configuration.MeConfig;
-
-public class KsamPlannerConfig implements KsamElementConfig {
-
-    @Override
-    public Map<String, String> getElementConfig(MeConfig meConfig) {
-	/**
-	 * meConfig.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors()
-	 * .forEach(monitor -> {
-	 * this.config.put(monitor.getMonitorAttributes().getMonitorId() + ".type",
-	 * monitor.getType().toString());
-	 * this.config.put(monitor.getMonitorAttributes().getMonitorId() + ".frequency",
-	 * String.valueOf(monitor.getMonitorAttributes().getFrequency()));
-	 * this.config.put(monitor.getMonitorAttributes().getMonitorId() + ".cost.type",
-	 * String.valueOf(monitor.getMonitorAttributes().getCost().getType().toString()));
-	 * this.config.put(monitor.getMonitorAttributes().getMonitorId() + ".cost.type",
-	 * String.valueOf(monitor.getMonitorAttributes().getCost().getType().toString()));
-	 * });
-	 */
-	return null;
-    }
+public class KsamPlannerConfig implements IKsamElementConfig {
+    //
+    // private Map<String, String> config = new HashMap<>();
+    //
+    // @Override
+    // public Map<String, String> getElementConfig(MeConfig meConfig) {
+    // meConfig.getKsamConfig().getPlannerConfig().getPlanTechniques().forEach(technique
+    // -> {
+    // this.config.put("techId", technique.getTechId().toString());
+    // technique.getAlgorithms().forEach(algorithm -> {
+    //
+    // this.config.put(technique.getTechId().toString() + ".algorithmId",
+    // algorithm.getAlgorithmId().toString());
+    //
+    // algorithm.getAlgorithmParameters().forEach(algorithmParameter -> {
+    // this.config.put(technique.getTechId().toString() + "." +
+    // algorithm.getAlgorithmId().toString() + "."
+    // + algorithmParameter.getKey(), algorithmParameter.getValue());
+    // });
+    //
+    // algorithm.getEvaluationParameters().forEach(evalParameter -> {
+    // this.config.put(technique.getTechId().toString() + "." +
+    // algorithm.getAlgorithmId().toString() + "."
+    // + evalParameter.getKey(), evalParameter.getValue());
+    // });
+    //
+    // });
+    // });
+    //
+    // return this.config;
+    // }
+    //
+    // @Override
+    // public void setNewEntry(String key, String value) {
+    // this.config.put(key, value);
+    //
+    // }
 
 }
