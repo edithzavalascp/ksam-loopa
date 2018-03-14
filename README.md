@@ -14,6 +14,6 @@ This implementation of KSAM is licensed under the [Apache License, Version 2.0](
 
 ### Usage:
 
-- API at https://httpksam.docs.apiary.io/#
+- API description at https://httpksam.docs.apiary.io/#
 
 **Main contact:** Edith Zavala (<zavala@essi.upc.edu>)
