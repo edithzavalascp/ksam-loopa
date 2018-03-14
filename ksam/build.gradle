@@ -37,7 +37,7 @@ dependencies {
     
     compile project(':loopa')
     
-	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+	compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 	
     
     testCompile("junit:junit")
