@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-starter")
+    compile("org.springframework.boot:spring-boot-actuator")
     
     compile("org.springframework:spring-web")
     
@@ -35,9 +35,12 @@ dependencies {
     compile("org.uma.jmetal:jmetal:5.5")
     
     
-    compile project(':loopa')
+    compile (project(':loopa')){
+       exclude group: 'org.slf4j'
+    }
+
     
-	compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+	//compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 	
     
     testCompile("junit:junit")

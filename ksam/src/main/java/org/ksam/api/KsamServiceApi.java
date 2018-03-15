@@ -34,5 +34,4 @@ public class KsamServiceApi {
 	}
 	return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
-
 }

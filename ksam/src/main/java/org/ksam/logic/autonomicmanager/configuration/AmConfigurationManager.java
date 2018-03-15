@@ -26,7 +26,7 @@ public class AmConfigurationManager {
 	ObjectMapper mapper = new ObjectMapper();
 	try {
 	    InputStream is = AmConfigurationManager.class.getResourceAsStream(amConfigFile);
-	    LOGGER.info("" + is);
+	    // LOGGER.info("" + is);
 	    StringBuilder textBuilder = new StringBuilder();
 	    try (Reader reader = new BufferedReader(
 		    new InputStreamReader(is, Charset.forName(StandardCharsets.UTF_8.name())))) {
