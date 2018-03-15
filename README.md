@@ -9,11 +9,11 @@ This implementation of KSAM is licensed under the [Apache License, Version 2.0](
 ### Getting started:
 - Install docker (https://www.docker.com/)
 - Get KSAM latest Docker image ($ docker pull edithzavala/ksam:latest)
-- Run KSAM ($ docker run -p 8080:8080 edithzavala/ksam [configFilePath])
- - Note: Current configFilePath: /application.json
+- Run KSAM ($ docker run -p 8080:8080 edithzavala/ksam /application.json)
+  * Note: /application.json is a mandatory configuration file placed at src/main/resources
 
 ### Usage:
 
-- API at https://httpksam.docs.apiary.io/#
+- API description at https://httpksam.docs.apiary.io/#
 
 **Main contact:** Edith Zavala (<zavala@essi.upc.edu>)
