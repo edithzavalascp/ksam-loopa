@@ -27,6 +27,23 @@ public class Normalizer implements IMonitorOperation {
 
     @Override
     public boolean isAnalysisRequired() {
+	/**
+	 * bool isUltrasonicFrontCenterOk = true; bool isUltrasonicFrontRightOk = true;
+	 * 
+	 * if (distanceToObstacleOld < 0) { -- ask vehicles around for distance,
+	 * multiply it by -1 and set it to distanceToObstacleOld std::cout << "Ask for
+	 * frontal distance info" << std::endl; isUltrasonicFrontCenterOk = false; }
+	 * else { isUltrasonicFrontRightOk = true; }
+	 * 
+	 * if ((false == isUltrasonicFrontCenterOk) && (false ==
+	 * isUltrasonicFrontRightOk)) { std::cout << "Change to manual mode" <<
+	 * std::endl; m_vehicleControl.setSpeed(0);
+	 * m_vehicleControl.setSteeringWheelAngle(0); Container c2(m_vehicleControl);
+	 * getConference().send(c2); break; }
+	 * 
+	 * if (distanceToObstacle > 100000000) { isUltrasonicFrontRightOk = false; }
+	 * else { isUltrasonicFrontRightOk = true; }
+	 */
 	return this.isAnalysisRequired;
     }
 
