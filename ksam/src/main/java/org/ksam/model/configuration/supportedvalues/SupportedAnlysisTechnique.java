@@ -9,8 +9,12 @@ public enum SupportedAnlysisTechnique {
 	this.name = name;
     }
 
-    @Override
-    public String toString() {
+    public String getLongName() {
 	return name;
     }
+
+    // @Override
+    // public String toString() {
+    // return name;
+    // }
 }

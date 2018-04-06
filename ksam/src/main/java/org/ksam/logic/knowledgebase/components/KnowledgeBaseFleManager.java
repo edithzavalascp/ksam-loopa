@@ -11,26 +11,32 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
+    private ILoopAElementComponent owner = null;
+
     @Override
     public void setConfiguration(Map<String, String> config) {
-
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
     }
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info("Pesist data");
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | persist monitoring data");
+	// try {
+	// Thread.sleep(50);
+	// } catch (InterruptedException e) {
+	// e.printStackTrace();
+	// }
+	// LOGGER.info("Data persisted");
     }
 
     @Override
     public void setComponent(ILoopAElementComponent c) {
-	// TODO Auto-generated method stub
-
+	// LOGGER.info("Set component");
+	this.owner = c;
     }
 
     @Override
     public ILoopAElementComponent getComponent() {
-	// TODO Auto-generated method stub
-	return null;
+	return this.owner;
     }
-
 }

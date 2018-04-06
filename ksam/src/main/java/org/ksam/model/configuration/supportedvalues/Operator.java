@@ -4,7 +4,7 @@ public enum Operator {
     EQUAL {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
@@ -13,7 +13,7 @@ public enum Operator {
     NOT {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
@@ -22,7 +22,7 @@ public enum Operator {
     GT {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
@@ -31,7 +31,7 @@ public enum Operator {
     LT {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
@@ -40,7 +40,7 @@ public enum Operator {
     GOE {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
@@ -49,12 +49,12 @@ public enum Operator {
     LOT {
 
 	@Override
-	double apply(Object x, Object y) {
+	public double apply(Object x, Object y) {
 	    // TODO Auto-generated method stub
 	    return 0;
 	}
 
     };
 
-    abstract double apply(Object x, Object y);
+    public abstract double apply(Object x, Object y);
 }

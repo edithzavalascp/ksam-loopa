@@ -1,50 +1,108 @@
 package org.ksam.logic.monitor.components;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ksam.model.configuration.MeConfig;
+import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
+import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Normalizer implements IMonitorOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private final MeConfig config;
-
+    private final Map<String, VariableValueCharacteristics> varsCh;
+    private int minSymptoms;
+    private Map<String, Integer> accumMonSymptoms;
+    // private Map<String, Integer> accumMonAlert;
+    // private Map<String, Integer> faultyMonitor;
+    private List<String> faultyMonitors;
+    private boolean isMonitorFaulty;
     private boolean isAnalysisRequired;
 
     public Normalizer(MeConfig config) {
 	super();
 	this.config = config;
-	this.isAnalysisRequired = false;
+	this.minSymptoms = 10;
+	this.varsCh = new HashMap<>();
+	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitoringVars()
+		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));
+	this.accumMonSymptoms = new HashMap<>();
+	this.faultyMonitors = new ArrayList<>();
+	// this.faultyMonitor = new HashMap<>();
+	// this.accumMonAlert = new HashMap<>();
+	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getMonitorVars().getMonitors()
+		.forEach(monitor -> {
+		    // this.accumMonAlert.put(monitor, 0);
+		    this.accumMonSymptoms.put(monitor, 0);
+		});
     }
 
     @Override
-    public Map<String, String> doMonitorOperation(Map<String, String> monData) {
-	LOGGER.info("Normalize monitoring data" + monData.get("monData").toString());
-	// TODO use config monitoring vars for normalizing them
-	return monData;
+    public MonitoringData doMonitorOperation(Map<String, String> monData) {
+	MonitoringData normalizedData = new MonitoringData();
+
+	try {
+	    ObjectMapper mapper = new ObjectMapper();
+	    MonitoringData data = mapper.readValue(monData.get("monData").toString(), MonitoringData.class);
+
+	    data.getMonitors().forEach(m -> {
+		this.isMonitorFaulty = false;
+		m.getMeasurements().forEach(measurement -> {
+		    measurement.getMeasures().forEach(measure -> {
+			String normalizedValue = varsCh.get(measurement.getVarId()).getValueType()
+				.getNormalizedValue(measure.getValue(), varsCh.get(measurement.getVarId()));
+			measure.setValue(normalizedValue);
+			if (normalizedValue.equals("-1")) {
+			    this.isMonitorFaulty = true;
+			}
+		    });
+		});
+		if (isMonitorFaulty) {
+		    if (this.accumMonSymptoms.get(m.getMonitorId()) == this.minSymptoms) {
+			this.accumMonSymptoms.put(m.getMonitorId(), 0);
+			this.faultyMonitors.add(m.getMonitorId());
+			// this.accumMonAlert.put(m.getMonitorId(),
+			// this.accumMonAlert.get(m.getMonitorId()) + 1);
+			// this.faultyMonitor.put(m.getMonitorId(),
+			// this.accumMonAlert.get(m.getMonitorId()));
+		    } else {
+			this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
+		    }
+		} else {
+		    this.accumMonSymptoms.put(m.getMonitorId(), 0);
+		    // this.accumMonAlert.put(m.getMonitorId(), 0);
+		}
+	    });
+	    normalizedData = data;
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+	return normalizedData;
     }
 
     @Override
     public boolean isAnalysisRequired() {
-	/**
-	 * bool isUltrasonicFrontCenterOk = true; bool isUltrasonicFrontRightOk = true;
-	 * 
-	 * if (distanceToObstacleOld < 0) { -- ask vehicles around for distance,
-	 * multiply it by -1 and set it to distanceToObstacleOld std::cout << "Ask for
-	 * frontal distance info" << std::endl; isUltrasonicFrontCenterOk = false; }
-	 * else { isUltrasonicFrontRightOk = true; }
-	 * 
-	 * if ((false == isUltrasonicFrontCenterOk) && (false ==
-	 * isUltrasonicFrontRightOk)) { std::cout << "Change to manual mode" <<
-	 * std::endl; m_vehicleControl.setSpeed(0);
-	 * m_vehicleControl.setSteeringWheelAngle(0); Container c2(m_vehicleControl);
-	 * getConference().send(c2); break; }
-	 * 
-	 * if (distanceToObstacle > 100000000) { isUltrasonicFrontRightOk = false; }
-	 * else { isUltrasonicFrontRightOk = true; }
-	 */
+	this.isAnalysisRequired = this.faultyMonitors.isEmpty() ? false : true;
 	return this.isAnalysisRequired;
     }
 
+    @Override
+    public List<String> getFaultyMonitors() {
+	List<String> fualtyMonitorsIteration = new ArrayList<>();
+	this.faultyMonitors.forEach(faultyMon -> fualtyMonitorsIteration.add(faultyMon));
+	this.faultyMonitors.clear();
+	return fualtyMonitorsIteration;
+    }
+
+    @Override
+    public void updateMinSymptoms(int newMinSympt) {
+	this.minSymptoms = newMinSympt;
+    }
 }

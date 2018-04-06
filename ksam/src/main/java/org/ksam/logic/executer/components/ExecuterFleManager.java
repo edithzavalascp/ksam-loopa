@@ -26,19 +26,24 @@ public class ExecuterFleManager implements IExecuterFleManager {
 
     @Override
     public void setConfiguration(Map<String, String> config) {
-	LOGGER.info("Set configuration");
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
 	this.managerPolicy.setPolicyContent(config);
     }
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info("Receive data");
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute");
+	try {
+	    Thread.sleep(50);
+	} catch (InterruptedException e) {
+	    e.printStackTrace();
+	}
 	sendExecuteDataToMEEffect();
 
     }
 
     private void sendExecuteDataToMEEffect() {
-	LOGGER.info("Send message to effect");
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | send adaptation to effect");
 	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
 
@@ -54,7 +59,7 @@ public class ExecuterFleManager implements IExecuterFleManager {
 
     @Override
     public void setComponent(ILoopAElementComponent c) {
-	LOGGER.info("Set component");
+	// LOGGER.info("Set component");
 	this.owner = c;
     }
 

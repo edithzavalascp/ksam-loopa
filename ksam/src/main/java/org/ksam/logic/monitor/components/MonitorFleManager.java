@@ -15,20 +15,23 @@ import org.loopa.element.functionallogic.enactor.monitor.IMonitorFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
+import org.model.analysisData.AlertType;
+import org.model.analysisData.AnalysisAlert;
+import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;;
 
 public class MonitorFleManager implements IMonitorFleManager {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-
     private ILoopAElementComponent owner = null;
+    private IPolicy managerPolicy;
 
-    private final Map<String, MeConfig> configs;
-
-    private final IPolicy managerPolicy;
-
-    private final Map<String, IMonitorOperation> monOperations;
+    private Map<String, MeConfig> configs;
+    private Map<String, IMonitorOperation> monOperations;
 
     public MonitorFleManager() {
 	this.configs = new HashMap<>();
@@ -38,56 +41,79 @@ public class MonitorFleManager implements IMonitorFleManager {
 
     @Override
     public void setConfiguration(Map<String, String> config) {
-	LOGGER.info("Set configuration");
-	if (config.containsKey("meIds")) {
-	    this.configs.put(config.get("meIds"), Application.meConfigM.getConfigs().get(config.get("meIds")));
-	    this.monOperations.put(config.get("meIds"), new Normalizer(this.configs.get(config.get("meIds"))));
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
+	if (config.containsKey("meId")) {
+	    this.configs.put(config.get("meId"), Application.meConfigM.getConfigs().get(config.get("meId")));
+	    this.monOperations.put(config.get("meId"), new Normalizer(this.configs.get(config.get("meId"))));
+	    this.managerPolicy.update(new Policy(this.managerPolicy.getPolicyOwner(), config));
+	} else if (config.containsKey("newMinSymptoms")) {
+	    this.monOperations.get(config.get("systemId"))
+		    .updateMinSymptoms(Integer.valueOf(config.get("newMinSymptoms")));
 	}
-	this.managerPolicy.update(new Policy(this.managerPolicy.getPolicyOwner(), config));
+
     }
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info("Receive data");
-	sendMonDataToKB(this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData));
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive monitoring data");
+	MonitoringData nomalizedData = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
+	sendMonDataToKB(nomalizedData);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {
-	    sendSymptomToAnalysis("SENSOR.FAILURE");
+	    LOGGER.info("Sensor failure detected");
+	    AnalysisAlert aa = new AnalysisAlert();
+	    aa.setFaultyMonitors(this.monOperations.get(monData.get("systemId")).getFaultyMonitors());
+	    aa.setSystemId(monData.get("systemId"));
+	    aa.setAlertType(AlertType.MONITORFAULT);
+	    sendSymptomToAnalysis(aa);
 	}
     }
 
-    private void sendSymptomToAnalysis(String symptom) {
-	LOGGER.info("Send message to analysis");
+    private void sendSymptomToAnalysis(AnalysisAlert symptomMonitorsStateData) {
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | send alert to analysis");
 	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
+	ObjectMapper mapper = new ObjectMapper();
+	try {
+	    String jsonAnalysisAlert = mapper.writeValueAsString(symptomMonitorsStateData);
 
-	LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.ANALYZE.toString(),
-		symptom);
+	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.ANALYZE.toString(),
+		    jsonAnalysisAlert);
 
-	IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
-		Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
+	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
+		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
 
-	((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
-		.doOperation(mssg);
+	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
+		    .doOperation(mssg);
+	} catch (JsonProcessingException e) {
+	    e.printStackTrace();
+	}
     }
 
-    private void sendMonDataToKB(Map<String, String> normalizedData) {
-	LOGGER.info("Send message to kb");
+    private void sendMonDataToKB(MonitoringData normalizedData) {
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | send monitoring to persist to kb");
 	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
 
-	LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
-		normalizedData.toString().substring(1, normalizedData.toString().length() - 1));
+	ObjectMapper mapper = new ObjectMapper();
+	try {
+	    String jsonNomalizedData = mapper.writeValueAsString(normalizedData);
 
-	IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
-		Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
+	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
+		    jsonNomalizedData);
 
-	((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
-		.doOperation(mssg);
+	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
+		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
+
+	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
+		    .doOperation(mssg);
+	} catch (JsonProcessingException e) {
+	    e.printStackTrace();
+	}
     }
 
     @Override
     public void setComponent(ILoopAElementComponent c) {
-	LOGGER.info("Set component");
+	// LOGGER.info("Set component");
 	this.owner = c;
     }
 

@@ -5,7 +5,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RuntimeMonitoData {
+public class RuntimeMonitorData {
     private String monitorId;
     private List<Measurement> measurements;
 

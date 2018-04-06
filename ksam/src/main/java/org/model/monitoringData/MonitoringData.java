@@ -7,9 +7,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MonitoringData {
+    private String systemId;
     private long timeStamp;
     private List<Entry<String, Object>> context;
-    private List<RuntimeMonitoData> monitors;
+    private List<RuntimeMonitorData> monitors;
 
     public long getTimeStamp() {
 	return timeStamp;
@@ -27,12 +28,20 @@ public class MonitoringData {
 	this.context = context;
     }
 
-    public List<RuntimeMonitoData> getMonitors() {
+    public List<RuntimeMonitorData> getMonitors() {
 	return monitors;
     }
 
-    public void setMonitors(List<RuntimeMonitoData> monitors) {
+    public void setMonitors(List<RuntimeMonitorData> monitors) {
 	this.monitors = monitors;
+    }
+
+    public String getSystemId() {
+	return systemId;
+    }
+
+    public void setSystemId(String systemId) {
+	this.systemId = systemId;
     }
 
 }

@@ -13,29 +13,35 @@ public class OpenDlvClient implements IEffectorEnactor {
     private static final String HOST_NAME = "localhost";
     private static final int PORT = 8082;
 
+    private final String vehicleId;
+
+    public OpenDlvClient(String vehicleId) {
+	super();
+	this.vehicleId = vehicleId;
+    }
+
     @Override
     public void enact(MonitorAdaptation a) {
 	try {
 	    Socket socket = new Socket(HOST_NAME, PORT);
 
 	    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-	    String dataString = "MessageId=DeactivateCamera,MessageId=ActivateV2V\0";
+	    // TODO Get action and monitor from MonitorAdaptation object
+	    String dataString = "VehicleId=" + vehicleId + ",Action=Deactivate,Monitor=i_rear\0";
 	    byte[] data = dataString.getBytes();
 	    dos.write(data);
-	    LOGGER.info(new String(data));
+	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId);
 
 	    dos.close();
 	    socket.close();
 	} catch (IOException e) {
-	    LOGGER.error(e.getMessage());
+	    // LOGGER.error(e.getMessage());
 	}
     }
 
-    public static void main(String[] args) {
-	// new OpenDlvClient().enact(new MonitorAdaptation());
-	OpenDlvClient odlvC = new OpenDlvClient();
-	for (int i = 0; i < 10; i++) {
-	    odlvC.enact(new MonitorAdaptation());
-	}
-    }
+    // public static void main(String[] args) {
+    // // new OpenDlvClient().enact(new MonitorAdaptation());
+    // OpenDlvClient odlvC = new OpenDlvClient("0");
+    // odlvC.enact(new MonitorAdaptation());
+    // }
 }

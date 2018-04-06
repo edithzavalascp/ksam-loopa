@@ -22,7 +22,8 @@ public class Effector implements IEffector {
 
     @Override
     public void effect(IMessage m) {
-	LOGGER.info("Adaptation received to effect");
+	LOGGER.info("Effector | receive adaptation to effect");
+	LOGGER.info("Effector | send adaptation to enact");
 	MonitorAdaptation a = new MonitorAdaptation();
 	a.setAdaptId(m.getMessageBody().get("adaptId"));
 	a.setMonitorsToAdd(Stream.of(m.getMessageBody().get("monitorsToAdd")).collect(Collectors.toList()));

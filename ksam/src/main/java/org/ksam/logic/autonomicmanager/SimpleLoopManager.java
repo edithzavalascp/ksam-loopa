@@ -78,7 +78,7 @@ public class SimpleLoopManager {
 	this.loop = new SimpleAutonomicManager(amC.getId(), amC.getElementsMessageBodyTypesPolicy(), m, a, p, e, kb);
 
 	// Start loop
-	this.loop.start();
+	this.loop.construct();
     }
 
     public SimpleAutonomicManager getAMLoop() {

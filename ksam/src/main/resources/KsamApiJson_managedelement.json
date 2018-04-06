@@ -250,7 +250,7 @@
 		                                {
 											"varId": "FrontalDistance",
 											"operator": "NOT",
-											"value": "unknown"
+											"value": -1
 										}]
 								}]
 							},
@@ -262,7 +262,7 @@
 									"conditions": [{
 											"varId": "FrontalDistance",
 											"operator": "NOT",
-											"value": "unknown"
+											"value": -1
 										},
 										{
 											"varId": "Roadway",
@@ -297,9 +297,9 @@
 											"value": "Freeflow"
 										},
 		                                {
-											"varId": "HighwayChauffeurAck",
+											"varId": "HighwayChauffeurStatus",
 											"operator": "EQUAL",
-											"value": true
+											"value": 0
 										}]
 								}]
 							},
@@ -309,9 +309,9 @@
 									"ruleId": "r1",
 									"events": ["SetAutonomousDriving"],
 									"conditions": [{
-											"varId": "HighwayChauffeurAck",
+											"varId": "HighwayChauffeurStatus",
 											"operator": "EQUAL",
-											"value": true
+											"value": 0
 										},
 										{
 											"varId": "Roadway",
@@ -424,7 +424,7 @@
 							"conditions": [{
 								"varId": "FrontalDistance",
 								"operator": "EQUAL",
-								"value": "unknown"
+								"value": -1
 							}]
 						}]
 					}
@@ -593,13 +593,6 @@
 					},
 		            {
 						"varId": "SelfConfiguration",
-						"type": "NOMINAL",
-						"valueCharacteristics": {
-							"valueType": "BOOLEAN"
-						}
-					},
-		              {
-						"varId": "HighwayChauffeurAck",
 						"type": "NOMINAL",
 						"valueCharacteristics": {
 							"valueType": "BOOLEAN"
