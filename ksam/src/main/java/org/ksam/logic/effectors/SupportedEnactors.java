@@ -11,8 +11,8 @@ public class SupportedEnactors {
     public static final Map<String, IEffectorEnactor> enactors = new HashMap<String, IEffectorEnactor>() {
 	{
 	    put("proteusMonitor", new ProteusClient());
-	    put("openDlvMonitor_v0", new OpenDlvClient("0"));
-	    put("openDlvMonitor_v1", new OpenDlvClient("1"));
+	    put("openDlvMonitorv0", new OpenDlvClient("0"));
+	    put("openDlvMonitorv1", new OpenDlvClient("1"));
 	}
     };
 }

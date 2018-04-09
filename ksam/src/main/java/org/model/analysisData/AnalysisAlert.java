@@ -2,6 +2,8 @@ package org.model.analysisData;
 
 import java.util.List;
 
+import org.ksam.model.adaptation.AlertType;
+
 public class AnalysisAlert {
     private String systemId;
     private AlertType alertType;

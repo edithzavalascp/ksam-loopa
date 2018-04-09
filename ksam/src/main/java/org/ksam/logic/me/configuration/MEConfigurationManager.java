@@ -31,7 +31,8 @@ public class MEConfigurationManager {
 
 	loop.getAMLoop().addME(config.getSystemUnderMonitoringConfig().getSystemId(), new Recipient(
 		"effector_" + config.getSystemUnderMonitoringConfig().getSystemId(),
-		Arrays.asList(AMMessageBodyType.ADAPTATION.toString()),
+		Arrays.asList(AMMessageBodyType.ADAPTATION.toString()
+			+ config.getSystemUnderMonitoringConfig().getSystemId()),
 		new Effector(SupportedEnactors.enactors.get(config.getSystemUnderMonitoringConfig().getSystemId()))));
 
     }

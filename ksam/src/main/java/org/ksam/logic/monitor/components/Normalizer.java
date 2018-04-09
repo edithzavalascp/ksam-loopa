@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.ksam.model.configuration.MeConfig;
+import org.ksam.model.configuration.SumConfig;
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
 import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Normalizer implements IMonitorOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private final MeConfig config;
+    private final SumConfig config;
     private final Map<String, VariableValueCharacteristics> varsCh;
     private int minSymptoms;
     private Map<String, Integer> accumMonSymptoms;
@@ -26,22 +26,21 @@ public class Normalizer implements IMonitorOperation {
     private boolean isMonitorFaulty;
     private boolean isAnalysisRequired;
 
-    public Normalizer(MeConfig config) {
+    public Normalizer(SumConfig config) {
 	super();
 	this.config = config;
 	this.minSymptoms = 10;
 	this.varsCh = new HashMap<>();
-	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitoringVars()
+	this.config.getSystemConfiguration().getMonitorConfig().getMonitoringVars()
 		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));
 	this.accumMonSymptoms = new HashMap<>();
 	this.faultyMonitors = new ArrayList<>();
 	// this.faultyMonitor = new HashMap<>();
 	// this.accumMonAlert = new HashMap<>();
-	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getMonitorVars().getMonitors()
-		.forEach(monitor -> {
-		    // this.accumMonAlert.put(monitor, 0);
-		    this.accumMonSymptoms.put(monitor, 0);
-		});
+	this.config.getSystemVariables().getMonitorVars().getMonitors().forEach(monitor -> {
+	    // this.accumMonAlert.put(monitor, 0);
+	    this.accumMonSymptoms.put(monitor, 0);
+	});
     }
 
     @Override
@@ -59,12 +58,15 @@ public class Normalizer implements IMonitorOperation {
 			String normalizedValue = varsCh.get(measurement.getVarId()).getValueType()
 				.getNormalizedValue(measure.getValue(), varsCh.get(measurement.getVarId()));
 			measure.setValue(normalizedValue);
+			// LOGGER.info("Normalizer | process monitoring data of monitor " +
+			// m.getMonitorId());
 			if (normalizedValue.equals("-1")) {
 			    this.isMonitorFaulty = true;
 			}
 		    });
 		});
 		if (isMonitorFaulty) {
+		    this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
 		    if (this.accumMonSymptoms.get(m.getMonitorId()) == this.minSymptoms) {
 			this.accumMonSymptoms.put(m.getMonitorId(), 0);
 			this.faultyMonitors.add(m.getMonitorId());
@@ -72,8 +74,6 @@ public class Normalizer implements IMonitorOperation {
 			// this.accumMonAlert.get(m.getMonitorId()) + 1);
 			// this.faultyMonitor.put(m.getMonitorId(),
 			// this.accumMonAlert.get(m.getMonitorId()));
-		    } else {
-			this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
 		    }
 		} else {
 		    this.accumMonSymptoms.put(m.getMonitorId(), 0);
@@ -97,7 +97,8 @@ public class Normalizer implements IMonitorOperation {
     public List<String> getFaultyMonitors() {
 	List<String> fualtyMonitorsIteration = new ArrayList<>();
 	this.faultyMonitors.forEach(faultyMon -> fualtyMonitorsIteration.add(faultyMon));
-	this.faultyMonitors.clear();
+	this.faultyMonitors.clear(); // instead of clear, save a historic thus a monitor recovered could be detected
+				     // and an alert being triggered. Particularly, when monitors are cheap.
 	return fualtyMonitorsIteration;
     }
 

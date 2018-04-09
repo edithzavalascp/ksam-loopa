@@ -1,5 +1,6 @@
 package org.ksam.logic.executer.components;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -13,8 +14,11 @@ import org.loopa.element.functionallogic.enactor.executer.IExecuterFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
+import org.model.executeData.ExecuteAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ExecuterFleManager implements IExecuterFleManager {
 
@@ -32,23 +36,32 @@ public class ExecuterFleManager implements IExecuterFleManager {
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute");
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute: "
+		+ monData.toString());
 	try {
-	    Thread.sleep(50);
-	} catch (InterruptedException e) {
+	    ObjectMapper mapper = new ObjectMapper();
+	    ExecuteAlert data = mapper.readValue(monData.get("content"), ExecuteAlert.class);
+	    // try {
+	    // Thread.sleep(50);
+	    // } catch (InterruptedException e) {
+	    // e.printStackTrace();
+	    // }
+	    sendExecuteDataToMEEffect();
+	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-	sendExecuteDataToMEEffect();
 
     }
 
     private void sendExecuteDataToMEEffect() {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | send adaptation to effect");
+
 	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
 
-	MeAdaptationMessageBody messageContent = new MeAdaptationMessageBody(AMMessageBodyType.ADAPTATION.toString(),
-		"adaptId", new ArrayList<String>(), new ArrayList<String>());
+	MeAdaptationMessageBody messageContent = new MeAdaptationMessageBody(
+		AMMessageBodyType.ADAPTATION.toString() + "openDlvMonitorv0", "adaptId", new ArrayList<String>(),
+		new ArrayList<String>());
 
 	IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
 		Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MonitorUnderMonitoringConfig {
+    private List<String> initialActiveMonitors;
     private List<Monitor> monitors;
     private List<MonitoringVariable> monitoringVars;
 
@@ -23,6 +24,14 @@ public class MonitorUnderMonitoringConfig {
 
     public void setMonitoringVars(List<MonitoringVariable> monitoringVars) {
 	this.monitoringVars = monitoringVars;
+    }
+
+    public List<String> getInitialActiveMonitors() {
+	return initialActiveMonitors;
+    }
+
+    public void setInitialActiveMonitors(List<String> initialActiveMonitors) {
+	this.initialActiveMonitors = initialActiveMonitors;
     }
 
 }

@@ -3,13 +3,15 @@ package org.ksam.client;
 import java.util.HashMap;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 
 public class ProteusClient implements IEffectorEnactor {
-
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     // add this kind of policies
     private HashMap<String, String> endpointIdUrl;
 
@@ -30,7 +32,7 @@ public class ProteusClient implements IEffectorEnactor {
 
     @Override
     public void enact(MonitorAdaptation a) {
-	// TODO Creat json from MonitorAdaptation and call the POST
+	LOGGER.info("También me llega");
 
     }
 }

@@ -1,4 +1,4 @@
-package org.model.analysisData;
+package org.ksam.model.adaptation;
 
 public enum AlertType {
     MONITORFAULT, LOWBATTERYLEVEL

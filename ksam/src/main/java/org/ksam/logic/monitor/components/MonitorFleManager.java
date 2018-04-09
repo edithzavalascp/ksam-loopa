@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.ksam.api.Application;
+import org.ksam.model.adaptation.AlertType;
 import org.ksam.model.configuration.MeConfig;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
@@ -15,7 +16,6 @@ import org.loopa.element.functionallogic.enactor.monitor.IMonitorFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
-import org.model.analysisData.AlertType;
 import org.model.analysisData.AnalysisAlert;
 import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
@@ -44,7 +44,8 @@ public class MonitorFleManager implements IMonitorFleManager {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
 	if (config.containsKey("meId")) {
 	    this.configs.put(config.get("meId"), Application.meConfigM.getConfigs().get(config.get("meId")));
-	    this.monOperations.put(config.get("meId"), new Normalizer(this.configs.get(config.get("meId"))));
+	    this.monOperations.put(config.get("meId"),
+		    new Normalizer(this.configs.get(config.get("meId")).getSystemUnderMonitoringConfig()));
 	    this.managerPolicy.update(new Policy(this.managerPolicy.getPolicyOwner(), config));
 	} else if (config.containsKey("newMinSymptoms")) {
 	    this.monOperations.get(config.get("systemId"))
@@ -69,19 +70,17 @@ public class MonitorFleManager implements IMonitorFleManager {
     }
 
     private void sendSymptomToAnalysis(AnalysisAlert symptomMonitorsStateData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | send alert to analysis");
-	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
-		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
 	ObjectMapper mapper = new ObjectMapper();
 	try {
 	    String jsonAnalysisAlert = mapper.writeValueAsString(symptomMonitorsStateData);
-
 	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.ANALYZE.toString(),
 		    jsonAnalysisAlert);
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send alert to analysis");
 
+	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
+		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
 	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
 		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
-
 	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
 		    .doOperation(mssg);
 	} catch (JsonProcessingException e) {
@@ -90,20 +89,18 @@ public class MonitorFleManager implements IMonitorFleManager {
     }
 
     private void sendMonDataToKB(MonitoringData normalizedData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | send monitoring to persist to kb");
-	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
-		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
-
 	ObjectMapper mapper = new ObjectMapper();
 	try {
 	    String jsonNomalizedData = mapper.writeValueAsString(normalizedData);
-
 	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
 		    jsonNomalizedData);
 
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send monitoring to persist to kb");
+
+	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
+		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
 	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
 		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
-
 	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
 		    .doOperation(mssg);
 	} catch (JsonProcessingException e) {
