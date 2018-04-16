@@ -54,9 +54,13 @@ public class AlertsPlanner implements IPlannerOperation {
     @Override
     public List<MonitorAdaptation> getAdaptationsPlanned() {
 	List<MonitorAdaptation> adaptationsIteration = new ArrayList<>();
-	this.adaptations.forEach(adaptation -> adaptationsIteration.add(adaptation));
+	this.adaptations.forEach(adaptation -> {
+	    if (adaptation.getMonitorsToAdd() != null || adaptation.getMonitorsToRemove() != null) {
+		adaptationsIteration.add(adaptation);
+	    }
+	});
 	this.adaptations.clear();
-	return adaptationsIteration;
+	return adaptationsIteration.isEmpty() ? null : adaptationsIteration;
     }
 
     @Override

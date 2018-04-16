@@ -27,7 +27,13 @@ public class OpenDlvClient implements IEffectorEnactor {
 
 	    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 	    // TODO Get action and monitor from MonitorAdaptation object
-	    String dataString = "VehicleId=" + vehicleId + ",Action=Deactivate,Monitor=i_rear\0";
+	    String dataString = "VehicleId:" + this.vehicleId
+		    + (a.getMonitorsToAdd() != null
+			    ? ",MonitorsToAdd:" + a.getMonitorsToAdd().toString().substring(1,
+				    a.getMonitorsToAdd().toString().length() - 1)
+			    : "")
+		    + (a.getMonitorsToRemove() != null ? ",MonitorsToRemove:" + a.getMonitorsToRemove().toString()
+			    .substring(1, a.getMonitorsToRemove().toString().length() - 1) : "" + "\0");
 	    byte[] data = dataString.getBytes();
 	    dos.write(data);
 	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId);

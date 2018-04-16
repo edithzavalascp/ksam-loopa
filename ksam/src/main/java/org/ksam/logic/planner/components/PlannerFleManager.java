@@ -61,7 +61,9 @@ public class PlannerFleManager implements IPlannerFleManager {
 		ExecuteAlert ea = new ExecuteAlert();
 		ea.setSystemId(data.getSystemId());
 		ea.setMonAdaptations(this.plannerOperations.get(data.getSystemId()).getAdaptationsPlanned());
-		sendPlanDataToExecute(ea);
+		if (ea.getMonAdaptations() != null) {
+		    sendPlanDataToExecute(ea);
+		}
 	    }
 	} catch (IOException e) {
 	    e.printStackTrace();

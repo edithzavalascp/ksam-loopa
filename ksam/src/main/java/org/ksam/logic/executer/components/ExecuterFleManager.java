@@ -1,12 +1,11 @@
 package org.ksam.logic.executer.components;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 
-import org.ksam.logic.message.adaptation.MeAdaptationMessageBody;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
+import org.loopa.comm.message.LoopAElementMessageBody;
 import org.loopa.comm.message.LoopAElementMessageCode;
 import org.loopa.comm.message.Message;
 import org.loopa.comm.message.MessageType;
@@ -18,6 +17,7 @@ import org.model.executeData.ExecuteAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ExecuterFleManager implements IExecuterFleManager {
@@ -36,38 +36,35 @@ public class ExecuterFleManager implements IExecuterFleManager {
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute: "
-		+ monData.toString());
+	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute");
 	try {
 	    ObjectMapper mapper = new ObjectMapper();
 	    ExecuteAlert data = mapper.readValue(monData.get("content"), ExecuteAlert.class);
-	    // try {
-	    // Thread.sleep(50);
-	    // } catch (InterruptedException e) {
-	    // e.printStackTrace();
-	    // }
-	    sendExecuteDataToMEEffect();
+	    sendExecuteDataToMEEffect(data);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-
     }
 
-    private void sendExecuteDataToMEEffect() {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | send adaptation to effect");
+    private void sendExecuteDataToMEEffect(ExecuteAlert data) {
+	ObjectMapper mapper = new ObjectMapper();
+	try {
+	    String jsonExecuteAlert = mapper.writeValueAsString(data);
+	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(
+		    AMMessageBodyType.ADAPTATION.toString() + data.getSystemId(), jsonExecuteAlert);
 
-	String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
-		.get(LoopAElementMessageCode.MSSGOUTFL.toString());
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send adaptation to effect");
 
-	MeAdaptationMessageBody messageContent = new MeAdaptationMessageBody(
-		AMMessageBodyType.ADAPTATION.toString() + "openDlvMonitorv0", "adaptId", new ArrayList<String>(),
-		new ArrayList<String>());
+	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
+		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
+	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
+		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
 
-	IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
-		Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
-
-	((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
-		.doOperation(mssg);
+	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
+		    .doOperation(mssg);
+	} catch (JsonProcessingException e) {
+	    e.printStackTrace();
+	}
     }
 
     @Override
