@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    compile("org.springframework.boot:spring-boot-actuator")
+    compile("org.springframework.boot:spring-boot-starter-actuator")
     
     compile("org.springframework:spring-web")
     
@@ -34,6 +34,7 @@ dependencies {
     
     compile("org.uma.jmetal:jmetal:5.5")
     
+	compile 'io.micrometer:micrometer-registry-graphite:1.0.3'
     
     compile (project(':loopa')){
        exclude group: 'org.slf4j'
