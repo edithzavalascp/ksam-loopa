@@ -54,15 +54,24 @@ public class MLIMWPP implements IAnalysisMethod {
 	case MONITORFAULT:
 	    for (String monVar : this.monsVars.get(monitorId)) {
 		// TODO Check if it's worth monitoring a variable with models probabilities
-		alternativeMons.put(monVar, this.varsMons.get(monVar));
-		alternativeMons.get(monVar).remove(monitorId);
+		List<String> listAlternative = new ArrayList<>();
+		this.varsMons.get(monVar).forEach(m -> listAlternative.add(m));
+		listAlternative.remove(monitorId);
+		alternativeMons.put(monVar, listAlternative);
 	    }
 	    break;
 	case LOWBATTERYLEVEL:
 	    // TODO Check worth variables with models probabilities
 	    // if this.monsVars changes alternativeMons could change!
-	    alternativeMons.putAll(this.monsVars);
+	    this.varsMons.forEach((k, v) -> alternativeMons.put(k, v));
 	    break;
+	case MONITORECOVERED:
+	    for (String monVar : this.monsVars.get(monitorId)) {
+		// LOGGER.info(this.varsMons.get(monVar).toString());
+		List<String> listAlternative = new ArrayList<>();
+		this.varsMons.get(monVar).forEach(m -> listAlternative.add(m));
+		alternativeMons.put(monVar, listAlternative);
+	    }
 	default:
 	    break;
 	}

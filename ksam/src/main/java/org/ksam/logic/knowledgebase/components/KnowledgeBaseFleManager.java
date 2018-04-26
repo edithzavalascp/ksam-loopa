@@ -6,11 +6,11 @@ import java.util.Map;
 
 import org.ksam.api.Application;
 import org.ksam.model.configuration.MeConfig;
+import org.ksam.model.monitoringData.MonitoringData;
 import org.loopa.element.functionallogic.enactor.knowledgebase.IKnowledgeBaseFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
-import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

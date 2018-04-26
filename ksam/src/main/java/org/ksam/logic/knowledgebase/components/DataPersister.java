@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.MeConfig;
-import org.model.monitoringData.RuntimeMonitorData;
+import org.ksam.model.monitoringData.RuntimeMonitorData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class DataPersister implements IKbOperation {
 			metrics.put(var, Metrics.gauge(metricName, new DoubleAdder()));
 
 		    }
-		    monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
+		    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
 		});
     }
 

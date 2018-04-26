@@ -1,4 +1,4 @@
-package org.model.planData;
+package org.ksam.model.planData;
 
 import java.util.List;
 import java.util.Map;

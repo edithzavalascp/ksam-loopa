@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
-import org.model.planData.PlanAlert;
+import org.ksam.model.planData.PlanAlert;
 
 public interface IPlannerOperation {
     void doPlanOperation(PlanAlert planAlert);

@@ -1,4 +1,4 @@
-package org.model.executeData;
+package org.ksam.model.executeData;
 
 import java.util.List;
 

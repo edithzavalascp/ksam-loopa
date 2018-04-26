@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.ksam.api.Application;
 import org.ksam.model.configuration.MeConfig;
+import org.ksam.model.executeData.ExecuteAlert;
+import org.ksam.model.planData.PlanAlert;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
 import org.loopa.comm.message.LoopAElementMessageBody;
@@ -16,8 +18,6 @@ import org.loopa.element.functionallogic.enactor.planner.IPlannerFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
-import org.model.executeData.ExecuteAlert;
-import org.model.planData.PlanAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +63,8 @@ public class PlannerFleManager implements IPlannerFleManager {
 		ea.setMonAdaptations(this.plannerOperations.get(data.getSystemId()).getAdaptationsPlanned());
 		if (ea.getMonAdaptations() != null) {
 		    sendPlanDataToExecute(ea);
+		} else {
+		    LOGGER.info(this.getComponent().getElement().getElementId() + " | no adaptation required");
 		}
 	    }
 	} catch (IOException e) {

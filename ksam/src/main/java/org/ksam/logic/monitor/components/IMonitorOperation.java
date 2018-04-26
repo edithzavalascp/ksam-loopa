@@ -3,7 +3,7 @@ package org.ksam.logic.monitor.components;
 import java.util.List;
 import java.util.Map;
 
-import org.model.monitoringData.MonitoringData;
+import org.ksam.model.monitoringData.MonitoringData;
 
 public interface IMonitorOperation {
 
@@ -12,6 +12,10 @@ public interface IMonitorOperation {
     boolean isAnalysisRequired();
 
     List<String> getFaultyMonitors();
+
+    List<String> getRecoveredMonitors();
+
+    boolean lowBatteryLevel();
 
     void updateMinSymptoms(int newMinSympt);
 

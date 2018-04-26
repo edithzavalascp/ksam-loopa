@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import org.ksam.model.adaptation.MonitorAdaptation;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.configuration.SumConfig;
-import org.model.planData.PlanAlert;
+import org.ksam.model.planData.PlanAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ public class AlertsPlanner implements IPlannerOperation {
     public List<MonitorAdaptation> getAdaptationsPlanned() {
 	List<MonitorAdaptation> adaptationsIteration = new ArrayList<>();
 	this.adaptations.forEach(adaptation -> {
-	    if (adaptation.getMonitorsToAdd() != null || adaptation.getMonitorsToRemove() != null) {
+	    if (!adaptation.getMonitorsToAdd().isEmpty() || !adaptation.getMonitorsToRemove().isEmpty()) {
 		adaptationsIteration.add(adaptation);
 	    }
 	});

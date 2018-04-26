@@ -1,11 +1,14 @@
 package org.ksam.logic.monitor.components;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.ksam.api.Application;
 import org.ksam.model.adaptation.AlertType;
+import org.ksam.model.analysisData.AnalysisAlert;
 import org.ksam.model.configuration.MeConfig;
+import org.ksam.model.monitoringData.MonitoringData;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
 import org.loopa.comm.message.LoopAElementMessageBody;
@@ -16,8 +19,6 @@ import org.loopa.element.functionallogic.enactor.monitor.IMonitorFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
-import org.model.analysisData.AnalysisAlert;
-import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,12 +61,29 @@ public class MonitorFleManager implements IMonitorFleManager {
 	MonitoringData nomalizedData = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
 	sendMonDataToKB(nomalizedData);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {
-	    LOGGER.info("Sensor failure detected");
-	    AnalysisAlert aa = new AnalysisAlert();
-	    aa.setFaultyMonitors(this.monOperations.get(monData.get("systemId")).getFaultyMonitors());
-	    aa.setSystemId(monData.get("systemId"));
-	    aa.setAlertType(AlertType.MONITORFAULT);
-	    sendSymptomToAnalysis(aa);
+	    LOGGER.info("Analysis is required");
+	    List<String> fm = this.monOperations.get(monData.get("systemId")).getFaultyMonitors();
+	    if (!fm.isEmpty()) {
+		AnalysisAlert aa = new AnalysisAlert();
+		aa.setFaultyMonitors(fm);
+		aa.setSystemId(monData.get("systemId"));
+		aa.setAlertType(AlertType.MONITORFAULT);
+		sendSymptomToAnalysis(aa);
+	    }
+	    List<String> rm = this.monOperations.get(monData.get("systemId")).getRecoveredMonitors();
+	    if (!rm.isEmpty()) {
+		AnalysisAlert aa = new AnalysisAlert();
+		aa.setRecoveredMonitors(rm);
+		aa.setSystemId(monData.get("systemId"));
+		aa.setAlertType(AlertType.MONITORECOVERED);
+		sendSymptomToAnalysis(aa);
+	    }
+	    if (this.monOperations.get(monData.get("systemId")).lowBatteryLevel()) {
+		AnalysisAlert aa = new AnalysisAlert();
+		aa.setSystemId(monData.get("systemId"));
+		aa.setAlertType(AlertType.LOWBATTERYLEVEL);
+		sendSymptomToAnalysis(aa);
+	    }
 	}
     }
 

@@ -5,12 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
 import org.ksam.model.configuration.SumConfig;
-import org.model.planData.PlanAlert;
+import org.ksam.model.planData.PlanAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.micrometer.core.instrument.Metrics;
 
 public class MOONSGAII implements IPlanMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -19,6 +22,9 @@ public class MOONSGAII implements IPlanMethod {
     private SumConfig config;
     private Map<String, Double> monsCost;
 
+    private List<String> activeMonitors;
+    private Map<String, AtomicInteger> monitorMetrics;
+
     public MOONSGAII(SumConfig config, List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
 	super();
@@ -26,9 +32,20 @@ public class MOONSGAII implements IPlanMethod {
 	this.algorithmParams = algorithmParams;
 	this.evalParams = evalParams;
 	this.monsCost = new HashMap<>();
+	this.monitorMetrics = new HashMap<>();
+	this.activeMonitors = this.config.getSystemConfiguration().getMonitorConfig().getInitialActiveMonitors();
 	// TODO Check different types of costs, how to managed that?
 	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
 	    this.monsCost.put(m.getMonitorAttributes().getMonitorId(), m.getMonitorAttributes().getCost().getValue());
+	    String metricName = "ksam.me." + this.config.getSystemId() + ".monitor."
+		    + m.getMonitorAttributes().getMonitorId() + ".state";
+	    if (this.activeMonitors.contains(m.getMonitorAttributes().getMonitorId())) {
+		this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
+			Metrics.gauge(metricName, new AtomicInteger(1)));
+	    } else {
+		this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
+			Metrics.gauge(metricName, new AtomicInteger(0)));
+	    }
 	});
     }
 
@@ -55,16 +72,86 @@ public class MOONSGAII implements IPlanMethod {
 		    for (String m : entry.getValue()) {
 			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
 		    }
-		    monitorsToAdd.add(minCostMonId);
+		    if (!this.activeMonitors.contains(minCostMonId)) {
+			monitorsToAdd.add(minCostMonId);
+			this.activeMonitors.add(minCostMonId);
+			this.monitorMetrics.get(minCostMonId).set(1);
+		    }
 		}
 	    }
 	    adapt.setMonitorsToAdd(monitorsToAdd);
+	    adapt.setMonitorsToRemove(new ArrayList<>());
 	    adaptations.add(adapt);
 	    break;
 	case LOWBATTERYLEVEL:
-	    // TODO Evaluate all combinations and select which to add and remove
-	    // List<String> monitorsToAdd = new ArrayList<>();
-	    // List<String> monitorsToRemove = new ArrayList<>();
+	    // Simple algorithm: Evaluate all combinations and select which to add and
+	    // remove
+	    MonitorAdaptation adaptB = new MonitorAdaptation();
+	    List<String> monitorsToAddB = new ArrayList<>();
+	    List<String> monitorsToRemoveB = new ArrayList<>(); // Don't remove faulty
+	    // monitors, once they are up again they could be re-incorporated. Particularly,
+	    // if they are cheaper.
+	    adaptB.setAdaptId("LOWBATTERYLEVEL" + planAlert.getSystemId());
+
+	    // Substitute this simplified algorithm for the genetic one - take into account
+	    // context in Analysis
+	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
+		if (!entry.getValue().isEmpty()) {
+
+		    String minCostMonId = entry.getValue().get(0);
+		    for (String m : entry.getValue()) {
+			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
+		    }
+		    //////////////////////////////////////////////////////////
+		    if (!this.activeMonitors.contains(minCostMonId)) {
+			monitorsToAddB.add(minCostMonId);
+			this.activeMonitors.add(minCostMonId);
+			this.monitorMetrics.get(minCostMonId).set(1);
+		    }
+		    //////////////////////////////////////////////////////////
+		    entry.getValue().remove(minCostMonId);
+
+		    for (String mId : entry.getValue()) {
+			if (this.activeMonitors.contains(mId)) {
+			    monitorsToRemoveB.add(mId);
+			    this.activeMonitors.remove(mId);
+			    this.monitorMetrics.get(mId).set(0);
+			}
+		    }
+		}
+	    }
+	    adaptB.setMonitorsToAdd(monitorsToAddB);
+	    adaptB.setMonitorsToRemove(monitorsToRemoveB);
+	    adaptations.add(adaptB);
+	    break;
+	case MONITORECOVERED:
+	    MonitorAdaptation adaptR = new MonitorAdaptation();
+	    List<String> monitorsToRemove = new ArrayList<>();
+
+	    adaptR.setAdaptId("MONITORECOVERED_" + planAlert.getSystemId());
+
+	    // Substitute this simplified algorithm for the genetic one
+	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
+		if (!entry.getValue().isEmpty()) {
+		    String minCostMonId = entry.getValue().get(0);
+		    for (String mId : entry.getValue()) {
+			// LOGGER.info("Alternative monitor: " + mId);
+			minCostMonId = this.monsCost.get(mId) < this.monsCost.get(minCostMonId) ? mId : minCostMonId;
+		    }
+		    entry.getValue().remove(minCostMonId);
+
+		    for (String mId : entry.getValue()) {
+			if (this.activeMonitors.contains(mId)) {
+			    monitorsToRemove.add(mId);
+			    this.activeMonitors.remove(mId);
+			    this.monitorMetrics.get(mId).set(0);
+			}
+		    }
+		}
+	    }
+	    adaptR.setMonitorsToAdd(new ArrayList<>());
+	    adaptR.setMonitorsToRemove(monitorsToRemove);
+	    adaptations.add(adaptR);
 	    break;
 	default:
 	    break;

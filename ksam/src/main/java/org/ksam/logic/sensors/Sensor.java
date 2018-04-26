@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ksam.model.monitoringData.MonitoringData;
 import org.loopa.comm.message.IMessage;
 import org.loopa.comm.message.LoopAElementMessageCode;
 import org.loopa.comm.message.Message;
 import org.loopa.comm.message.MessageType;
 import org.loopa.monitor.IMonitor;
 import org.loopa.monitor.sensor.ISensor;
-import org.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

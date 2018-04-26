@@ -1,4 +1,4 @@
-package org.model.monitoringData;
+package org.ksam.model.monitoringData;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

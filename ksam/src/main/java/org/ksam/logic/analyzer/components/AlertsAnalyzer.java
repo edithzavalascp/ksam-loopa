@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.ksam.model.analysisData.AnalysisAlert;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.configuration.SumConfig;
-import org.model.analysisData.AnalysisAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,8 +72,15 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 	    });
 	    break;
 	case LOWBATTERYLEVEL:
-	    LOGGER.info("Find alternatives for low battery level");
+	    LOGGER.info("AlertsAnalyzer | Low battery alert");
 	    this.varsMonsToPlan = this.techAlgorithms.get(0).doAnalysis(null, analysisAlert.getAlertType());
+	    break;
+	case MONITORECOVERED:
+	    LOGGER.info("AlertsAnalyzer | Recovered monitors: " + analysisAlert.getRecoveredMonitors().toString());
+	    analysisAlert.getRecoveredMonitors().forEach(recoveredm -> {
+		this.varsMonsToPlan
+			.putAll(this.techAlgorithms.get(0).doAnalysis(recoveredm, analysisAlert.getAlertType()));
+	    });
 	    break;
 	default:
 	    break;

@@ -3,6 +3,7 @@ package org.ksam.logic.executer.components;
 import java.io.IOException;
 import java.util.Map;
 
+import org.ksam.model.executeData.ExecuteAlert;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
 import org.loopa.comm.message.LoopAElementMessageBody;
@@ -13,7 +14,6 @@ import org.loopa.element.functionallogic.enactor.executer.IExecuterFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
 import org.loopa.policy.Policy;
-import org.model.executeData.ExecuteAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

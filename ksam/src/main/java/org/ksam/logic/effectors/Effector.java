@@ -3,9 +3,9 @@ package org.ksam.logic.effectors;
 import java.io.IOException;
 
 import org.ksam.client.IEffectorEnactor;
+import org.ksam.model.executeData.ExecuteAlert;
 import org.loopa.comm.message.IMessage;
 import org.loopa.executer.effector.IEffector;
-import org.model.executeData.ExecuteAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

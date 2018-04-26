@@ -1,4 +1,4 @@
-package org.model.monitoringData;
+package org.ksam.model.monitoringData;
 
 import java.util.List;
 
