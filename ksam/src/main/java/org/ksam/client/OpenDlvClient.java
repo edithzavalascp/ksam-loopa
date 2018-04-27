@@ -29,15 +29,17 @@ public class OpenDlvClient implements IEffectorEnactor {
 	    // TODO Get action and monitor from MonitorAdaptation object
 	    String dataString = "VehicleId:" + this.vehicleId
 		    + (!a.getMonitorsToAdd().isEmpty()
-			    ? ",MonitorsToAdd:" + a.getMonitorsToAdd().toString().substring(1,
-				    a.getMonitorsToAdd().toString().length() - 1)
-			    : ",MonitorsToAdd:")
-		    + (!a.getMonitorsToRemove().isEmpty() ? ",MonitorsToRemove:" + a.getMonitorsToRemove().toString()
-			    .substring(1, a.getMonitorsToRemove().toString().length() - 1)
-			    : ",MonitorsToRemove:" + "\0");
+			    ? ";MonitorsToAdd:" + a.getMonitorsToAdd().toString()
+				    .substring(1, a.getMonitorsToAdd().toString().length() - 1).replace(", ", ",")
+			    : ";MonitorsToAdd:")
+		    + (!a.getMonitorsToRemove().isEmpty()
+			    ? ";MonitorsToRemove:" + a.getMonitorsToRemove().toString()
+				    .substring(1, a.getMonitorsToRemove().toString().length() - 1).replace(", ", ",")
+			    : ";MonitorsToRemove:" + "\0");
 	    byte[] data = dataString.getBytes();
 	    dos.write(data);
-	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId);
+	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
+		    + dataString);
 
 	    dos.close();
 	    socket.close();

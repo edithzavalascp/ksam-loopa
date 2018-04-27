@@ -33,7 +33,7 @@ public class BatteryLevelInspector {
     }
 
     public boolean isBatteryLevelLow() {
-	return batteryLevel.doubleValue() < 0.85 ? true : false;
+	return batteryLevel.doubleValue() < 0.50 ? true : false;
     }
 
 }
