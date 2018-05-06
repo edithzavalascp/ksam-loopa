@@ -7,6 +7,7 @@ import java.util.Map;
 import org.ksam.api.Application;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.monitoringData.MonitoringData;
+import org.ksam.model.planData.PlanData;
 import org.loopa.element.functionallogic.enactor.knowledgebase.IKnowledgeBaseFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
@@ -44,25 +45,29 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | persist monitoring data");
-	try {
-	    ObjectMapper mapper = new ObjectMapper();
-	    MonitoringData data = mapper.readValue(monData.get("content"), MonitoringData.class);
-	    this.kbOperations.get(data.getSystemId()).persistData(data.getMonitors());
-	} catch (IOException e) {
-	    e.printStackTrace();
+	switch (monData.get("contentType")) {
+	case "MonitoringData":
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | persist monitoring data");
+	    try {
+		ObjectMapper mapper = new ObjectMapper();
+		MonitoringData data = mapper.readValue(monData.get("content"), MonitoringData.class);
+		this.kbOperations.get(data.getSystemId()).persistMonitorData(data.getMonitors());
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    break;
+	case "PlanData":
+	    try {
+		ObjectMapper mapper = new ObjectMapper();
+		PlanData data = mapper.readValue(monData.get("content"), PlanData.class);
+		this.kbOperations.get(data.getSystemId()).updateActiveMonitors(data.getActiveMonitors());
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    break;
+	default:
+	    break;
 	}
-	/**
-	 * Data received can be: MonitoringData, AnalysisData, PlanData or ExecuteData
-	 * Note: AnalysisAlert, PlanAlert and ExecuteAlert are sent between MAPE-K
-	 * Elements, not to KB for being persisted
-	 * 
-	 * 
-	 * 
-	 * Note2: private Map<String, Integer> activeMonitors; // got to specific ME
-	 * persistence implementation for MonitoringData
-	 */
-
     }
 
     @Override

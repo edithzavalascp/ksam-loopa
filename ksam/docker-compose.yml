@@ -6,5 +6,7 @@ services:
         image: ksam:latest
         ports:
             - "8080:8080"
+        volumes:
+        - ./weka:/tmp/weka
         network_mode: host
         command: "/application.json"

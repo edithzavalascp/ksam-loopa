@@ -112,6 +112,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	    String jsonNomalizedData = mapper.writeValueAsString(normalizedData);
 	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
 		    jsonNomalizedData);
+	    messageContent.getMessageBody().put("contentType", "MonitoringData");
 
 	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send monitoring to persist to kb");
 
