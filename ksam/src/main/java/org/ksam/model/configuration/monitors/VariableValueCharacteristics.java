@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class VariableValueCharacteristics {
     private VariableValueType valueType;
     private List<String> values;
+    private List<String> ranges;
 
     public VariableValueType getValueType() {
 	return valueType;
@@ -25,6 +26,14 @@ public class VariableValueCharacteristics {
 
     public void setValues(List<String> values) {
 	this.values = values;
+    }
+
+    public List<String> getRanges() {
+	return ranges;
+    }
+
+    public void setRanges(List<String> ranges) {
+	this.ranges = ranges;
     }
 
 }

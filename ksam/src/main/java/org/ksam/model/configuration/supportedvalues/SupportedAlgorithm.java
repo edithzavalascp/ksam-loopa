@@ -1,7 +1,7 @@
 package org.ksam.model.configuration.supportedvalues;
 
 public enum SupportedAlgorithm {
-    IMWPP("Inductuve Miner with Paths Probability"), NSGAII("Non-Dominated Sorting Genetic Algorithm II");
+    IMWPP("Inductuve Miner with Paths Probability"), NSGAII("Non-Dominated Sorting Genetic Algorithm II"), JRip("JRip");
 
     private final String name;
 

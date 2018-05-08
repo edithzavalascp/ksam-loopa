@@ -52,6 +52,7 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 		ObjectMapper mapper = new ObjectMapper();
 		MonitoringData data = mapper.readValue(monData.get("content"), MonitoringData.class);
 		this.kbOperations.get(data.getSystemId()).persistMonitorData(data.getMonitors());
+		this.kbOperations.get(data.getSystemId()).updateContext(data.getContext());
 	    } catch (IOException e) {
 		e.printStackTrace();
 	    }

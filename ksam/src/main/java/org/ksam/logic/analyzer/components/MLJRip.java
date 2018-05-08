@@ -11,7 +11,7 @@ import org.ksam.model.configuration.SumConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MLIMWPP implements IAnalysisMethod {
+public class MLJRip implements IAnalysisMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private List<Entry<String, String>> algorithmParams;
     private List<Entry<String, String>> evalParams;
@@ -19,7 +19,7 @@ public class MLIMWPP implements IAnalysisMethod {
     private Map<String, List<String>> varsMons;
     private Map<String, List<String>> monsVars;
 
-    public MLIMWPP(SumConfig config, List<Entry<String, String>> algorithmParams,
+    public MLJRip(SumConfig config, List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
 	super();
 	this.config = config;

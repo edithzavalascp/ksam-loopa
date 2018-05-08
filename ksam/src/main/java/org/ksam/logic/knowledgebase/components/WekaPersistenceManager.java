@@ -13,12 +13,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.ksam.model.configuration.monitors.Monitor;
+import org.ksam.model.configuration.monitors.MonitoringVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.reactivex.subjects.PublishSubject;
 
-public class WekaManager {
+public class WekaPersistenceManager {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private Map<String, Monitor> monitors;
     private Map<String, String> activeMonsVarsRuntimeData;
@@ -29,10 +30,13 @@ public class WekaManager {
 
     private PublishSubject<Entry<String, Double>> dataToPersistInArff;
     private final ExecutorService arffFilePersister = Executors.newSingleThreadExecutor();
+    private final MonVarsRangesTranslator mvrT;
 
-    public WekaManager(String meId, Map<String, Monitor> monitors, List<String> persistenceMonitors) {
+    public WekaPersistenceManager(String meId, Map<String, Monitor> monitors, List<String> persistenceMonitors,
+	    List<MonitoringVariable> monVars) {
 	super();
 	this.meId = meId;
+	this.mvrT = new MonVarsRangesTranslator(monVars);
 	this.persistenceMonitors = persistenceMonitors;
 	this.filePath = "/tmp/weka/" + this.meId + ".arff";
 	this.activeMonsVarsRuntimeData = new HashMap<>();
@@ -40,16 +44,18 @@ public class WekaManager {
 	this.dataToPersistInArff = PublishSubject.create();
 	this.dataToPersistInArff.subscribe(monVarData -> arffFilePersister.execute(() -> {
 	    if (this.activeMonsVarsRuntimeData.keySet().contains(monVarData.getKey())) {
-		this.activeMonsVarsRuntimeData.put(monVarData.getKey(), getValueRange(monVarData.getValue()));
-		if (!this.activeMonsVarsRuntimeData.values().contains(null)) {
-		    LOGGER.info("Persist weka data");
-		    this.arffFilePersister.execute(() -> {
-			setToArffFile("\n" + this.activeMonsVarsRuntimeData.values().toString().substring(1,
-				this.activeMonsVarsRuntimeData.values().toString().length() - 1), true);
-			this.activeMonsVarsRuntimeData.forEach((k, v) -> this.activeMonsVarsRuntimeData.put(k, null));
-			LOGGER.info(this.activeMonsVarsRuntimeData.toString());
-		    });
-		}
+		this.activeMonsVarsRuntimeData.put(monVarData.getKey(),
+			this.mvrT.getValueRange(monVarData.getKey().split("-")[1], monVarData.getValue()));
+		LOGGER.info("ksamKb - WekaPersistenceManager | Persist weka data");
+		// if (!this.activeMonsVarsRuntimeData.values().contains(null)) {
+		this.arffFilePersister.execute(() -> {
+		    setToArffFile("\n" + this.activeMonsVarsRuntimeData.values().toString().substring(1,
+			    this.activeMonsVarsRuntimeData.values().toString().length() - 1), true);
+		    // this.activeMonsVarsRuntimeData.forEach((k, v) ->
+		    // this.activeMonsVarsRuntimeData.put(k, null));
+		    // LOGGER.info(this.activeMonsVarsRuntimeData.toString());
+		});
+		// }
 	    }
 	}));
     }
@@ -80,7 +86,7 @@ public class WekaManager {
 	activeMonitors.forEach(am -> {
 	    if (this.persistenceMonitors.contains(am)) {
 		this.monitors.get(am).getMonitorAttributes().getMonitoringVars()
-			.forEach(var -> this.activeMonsVarsRuntimeData.put(am + "_" + var, null));
+			.forEach(var -> this.activeMonsVarsRuntimeData.put(am + "-" + var, "?"));
 	    }
 	});
 
@@ -90,25 +96,12 @@ public class WekaManager {
 	String header = "@relation " + this.meId + "\n\n";
 	// for (String m : this.activeMonitors) {
 	for (String monVar : this.activeMonsVarsRuntimeData.keySet()) {
-	    header += "@attribute " + monVar + " {0,<0.30,0.30-0.60,>0.6,1}\n";
+	    header += "@attribute " + monVar + " " + this.mvrT.getVarRanges(monVar.split("-")[1]) + "\n";
 	}
 	// }
 
 	header += "\n@data";
 	setToArffFile(header, false);
-    }
-
-    public String getValueRange(Double x) {
-	// LOGGER.info("Transform value to range");
-	if (x == 0 || x == 1 || x == null) {
-	    return String.valueOf(x);
-	} else if (x < 0.30) {
-	    return "<0.30";
-	} else if (x > 0.60) {
-	    return ">0.60";
-	} else {
-	    return "0.30-0.60";
-	}
     }
 
 }
