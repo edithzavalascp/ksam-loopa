@@ -160,4 +160,11 @@ public class MOONSGAII implements IPlanMethod {
 	return adaptations;
     }
 
+    @Override
+    public List<String> getUpdatedActiveMonitors() {
+	List<String> aMonIteration = new ArrayList<>();
+	this.activeMonitors.forEach(m -> aMonIteration.add(m));
+	return aMonIteration;
+    }
+
 }

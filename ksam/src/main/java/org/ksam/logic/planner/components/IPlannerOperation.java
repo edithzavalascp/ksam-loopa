@@ -15,4 +15,6 @@ public interface IPlannerOperation {
 
     void updatePlanAlgorithmParameters(List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams);
+
+    List<String> getUpdatedActiveMonitors();
 }

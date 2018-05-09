@@ -51,44 +51,44 @@ public class DataPersister implements IKbOperation {
 		    this.contextMetrics.put(state, Metrics.gauge(contextMetricName, new AtomicInteger()));
 		    this.contextMetrics.get(state).set(0);
 		});
+
 	this.wekaM = new WekaPersistenceManager(this.config.getSystemUnderMonitoringConfig().getSystemId(), monitors,
 		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
 			.getPersistenceMonitors(),
 		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
-			.getMonitoringVars());
+			.getMonitoringVars(),
+		this.config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates());
 	this.activeMonitors = this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
 		.getInitialActiveMonitors();
-	this.wekaM.updateHeader(this.activeMonitors);
+	this.wekaM.updateActiveMonitors(this.activeMonitors);
+    }
+
+    @Override
+    public void updateContext(List<Entry<String, Object>> context) {
+	Map<String, Integer> newVals = this.wekaM.setContextData(context);
+	newVals.forEach((k, v) -> this.contextMetrics.get(k).set(v));
     }
 
     @Override
     public void persistMonitorData(List<RuntimeMonitorData> data) {
 	// Assume one measure per iteration. Measure value is normalized.
+	Map<String, Double> monVarValue = new HashMap<>();
 	data.forEach(m -> {
 	    m.getMeasurements().forEach(measurement -> {
 		this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).reset();
 
 		Double value = Double.valueOf(measurement.getMeasures().get(0).getValue());
 		this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).add(value);
-		this.wekaM.setMonitoringData(m.getMonitorId() + "-" + measurement.getVarId(), value);
+		monVarValue.put(m.getMonitorId() + "-" + measurement.getVarId(), value);
 	    });
 
 	});
+	this.wekaM.setMonitoringData(monVarValue);
     }
 
     @Override
     public void updateActiveMonitors(List<String> activeMonitors) {
 	this.activeMonitors = activeMonitors;
-	this.wekaM.updateHeader(this.activeMonitors);
+	this.wekaM.updateActiveMonitors(activeMonitors);
     }
-
-    @Override
-    public void updateContext(List<Entry<String, Object>> context) {
-	context.forEach(ctx -> {
-	    String x = (String) ctx.getValue();
-	    LOGGER.info(ctx.getKey() + x);
-	    this.contextMetrics.get(ctx.getKey()).set(Integer.valueOf(x));
-	});
-    }
-
 }

@@ -31,12 +31,13 @@ public class MonVarsRangesTranslator {
 		}
 	    }
 	}
-	return "?"; // ? represent null/missing values for weka
+	return "?"; // ? represent null/missing values for weka, in ksam these values are normalized
+		    // and set to -1
     }
 
     public String getVarRanges(String varName) {
-	return "{" + this.varsRanges.get(varName).toString().substring(1,
-		this.varsRanges.get(varName).toString().length() - 1) + "}";
+	return "{0," + this.varsRanges.get(varName).toString().substring(1,
+		this.varsRanges.get(varName).toString().length() - 1) + ",1}";
     }
 
 }

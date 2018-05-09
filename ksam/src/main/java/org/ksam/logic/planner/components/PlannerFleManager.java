@@ -8,6 +8,7 @@ import org.ksam.api.Application;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.executeData.ExecuteAlert;
 import org.ksam.model.planData.PlanAlert;
+import org.ksam.model.planData.PlanData;
 import org.loopa.comm.message.AMMessageBodyType;
 import org.loopa.comm.message.IMessage;
 import org.loopa.comm.message.LoopAElementMessageBody;
@@ -63,6 +64,10 @@ public class PlannerFleManager implements IPlannerFleManager {
 		ea.setMonAdaptations(this.plannerOperations.get(data.getSystemId()).getAdaptationsPlanned());
 		if (ea.getMonAdaptations() != null) {
 		    sendPlanDataToExecute(ea);
+		    PlanData pd = new PlanData();
+		    pd.setSystemId(data.getSystemId());
+		    pd.setActiveMonitors(this.plannerOperations.get(data.getSystemId()).getUpdatedActiveMonitors());
+		    sendMonDataToKB(pd);
 		} else {
 		    LOGGER.info(this.getComponent().getElement().getElementId() + " | no adaptation required");
 		}
@@ -83,6 +88,27 @@ public class PlannerFleManager implements IPlannerFleManager {
 	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
 
+	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
+		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
+	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
+		    .doOperation(mssg);
+	} catch (JsonProcessingException e) {
+	    e.printStackTrace();
+	}
+    }
+
+    private void sendMonDataToKB(PlanData normalizedData) {
+	ObjectMapper mapper = new ObjectMapper();
+	try {
+	    String jsonNomalizedData = mapper.writeValueAsString(normalizedData);
+	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
+		    jsonNomalizedData);
+	    messageContent.getMessageBody().put("contentType", "PlanData");
+
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send active monitors to kb");
+
+	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
+		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
 	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
 		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
 	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())

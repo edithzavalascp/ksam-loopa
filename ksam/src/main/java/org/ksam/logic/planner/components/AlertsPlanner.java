@@ -69,4 +69,9 @@ public class AlertsPlanner implements IPlannerOperation {
 	// TODO Auto-generated method stub
 
     }
+
+    @Override
+    public List<String> getUpdatedActiveMonitors() {
+	return this.techAlgorithms.get(0).getUpdatedActiveMonitors();
+    }
 }

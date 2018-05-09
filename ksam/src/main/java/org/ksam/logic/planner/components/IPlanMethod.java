@@ -7,4 +7,6 @@ import org.ksam.model.planData.PlanAlert;
 
 public interface IPlanMethod {
     List<MonitorAdaptation> doPlan(PlanAlert planAlert);
+
+    List<String> getUpdatedActiveMonitors();
 }
