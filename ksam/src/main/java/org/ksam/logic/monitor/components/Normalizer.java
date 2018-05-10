@@ -1,5 +1,8 @@
 package org.ksam.logic.monitor.components;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,11 +69,28 @@ public class Normalizer implements IMonitorOperation {
 		this.isMonitorFaulty = false;
 		m.getMeasurements().forEach(measurement -> {
 		    measurement.getMeasures().forEach(measure -> {
+			/*********** Remove after AZ **********/
+			String filePathNN = "/tmp/weka/" + m.getMonitorId() + "-" + measurement.getVarId()
+				+ "NoNormalized.txt";
+			try {
+			    File file = new File(filePathNN);
+			    if (!file.exists()) {
+				file.createNewFile();
+			    }
+
+			    FileWriter fileWritter = new FileWriter(file, true);
+			    BufferedWriter output = new BufferedWriter(fileWritter);
+			    output.write(measure.getmTimeStamp() + " " + measure.getValue() + "\n");
+			    output.close();
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
+			/*********************/
+
 			String normalizedValue = varsCh.get(measurement.getVarId()).getValueType()
 				.getNormalizedValue(measure.getValue(), varsCh.get(measurement.getVarId()));
 			measure.setValue(normalizedValue);
-			// LOGGER.info("Normalizer | process monitoring data of monitor " +
-			// m.getMonitorId());
+
 			if (normalizedValue.equals("-1")) {
 			    this.isMonitorFaulty = true;
 			}
