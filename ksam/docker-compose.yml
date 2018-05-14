@@ -2,7 +2,6 @@ version: '2'
 
 services:
     ksam-loopa:
-        build: .
         image: ksam:latest
         ports:
             - "8080:8080"

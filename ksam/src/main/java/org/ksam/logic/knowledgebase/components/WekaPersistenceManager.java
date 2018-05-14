@@ -62,10 +62,11 @@ public class WekaPersistenceManager {
 	    });
 
 	    setToArffFile("\n"
-		    + this.pMonsVarsRuntimeData.values().toString().substring(1,
-			    this.pMonsVarsRuntimeData.values().toString().length() - 1)
-		    + ", " + this.contextVarsValues.values().toString().substring(1,
-			    this.contextVarsValues.values().toString().length() - 1),
+		    + this.pMonsVarsRuntimeData.values().toString()
+			    .substring(1, this.pMonsVarsRuntimeData.values().toString().length() - 1).replace(" ", "")
+		    + ","
+		    + this.contextVarsValues.values().toString()
+			    .substring(1, this.contextVarsValues.values().toString().length() - 1).replace(" ", ""),
 		    true);
 	}));
 

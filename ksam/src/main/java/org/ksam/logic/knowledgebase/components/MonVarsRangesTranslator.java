@@ -36,8 +36,8 @@ public class MonVarsRangesTranslator {
     }
 
     public String getVarRanges(String varName) {
-	return "{0," + this.varsRanges.get(varName).toString().substring(1,
-		this.varsRanges.get(varName).toString().length() - 1) + ",1}";
+	return "{0.0," + this.varsRanges.get(varName).toString()
+		.substring(1, this.varsRanges.get(varName).toString().length() - 1).replace(" ", "") + ",1.0}";
     }
 
 }
