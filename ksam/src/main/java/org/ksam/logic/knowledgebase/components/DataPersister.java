@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.configuration.monitors.Monitor;
+import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
 import org.ksam.model.monitoringData.RuntimeMonitorData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,39 +19,24 @@ public class DataPersister implements IKbOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
     private final MeConfig config;
-    private Map<String, Map<String, DoubleAdder>> monitorMetrics;
-    private List<String> activeMonitors;
     private Map<String, AtomicInteger> contextMetrics;
+    private List<String> activeMonitors;
+    private final Map<String, VariableValueCharacteristics> varsCh;
+
     private WekaPersistenceManager wekaM;
 
     public DataPersister(MeConfig config) {
 	super();
 	this.config = config;
-	this.monitorMetrics = new HashMap<>();
 	this.contextMetrics = new HashMap<>();
+	this.varsCh = new HashMap<>();
+	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitoringVars()
+		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));
 	Map<String, Monitor> monitors = new HashMap<>();
-	// create metrics for monitoring variables
 	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors()
 		.forEach(m -> {
-		    Map<String, DoubleAdder> metrics = new HashMap<>();
-		    for (String var : m.getMonitorAttributes().getMonitoringVars()) {
-			String metricName = "ksam.me." + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				+ ".monitor." + m.getMonitorAttributes().getMonitorId() + ".variable." + var;
-			metrics.put(var, Metrics.gauge(metricName, new DoubleAdder()));
-
-		    }
-		    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
 		    monitors.put(m.getMonitorAttributes().getMonitorId(), m);
 		});
-	// create metrics for context variables
-	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates()
-		.forEach(state -> {
-		    String contextMetricName = "ksam.me." + this.config.getSystemUnderMonitoringConfig().getSystemId()
-			    + ".context.variable." + state;
-		    this.contextMetrics.put(state, Metrics.gauge(contextMetricName, new AtomicInteger()));
-		    this.contextMetrics.get(state).set(0);
-		});
-
 	this.wekaM = new WekaPersistenceManager(this.config.getSystemUnderMonitoringConfig().getSystemId(), monitors,
 		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
 			.getPersistenceMonitors(),
@@ -61,6 +46,15 @@ public class DataPersister implements IKbOperation {
 	this.activeMonitors = this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
 		.getInitialActiveMonitors();
 	this.wekaM.updateActiveMonitors(this.activeMonitors);
+
+	// create metrics for context variables
+	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates()
+		.forEach(state -> {
+		    String contextMetricName = "ksam.me." + this.config.getSystemUnderMonitoringConfig().getSystemId()
+			    + ".context.variable." + state;
+		    this.contextMetrics.put(state, Metrics.gauge(contextMetricName, new AtomicInteger()));
+		    this.contextMetrics.get(state).set(0);
+		});
     }
 
     @Override
@@ -75,10 +69,11 @@ public class DataPersister implements IKbOperation {
 	Map<String, Double> monVarValue = new HashMap<>();
 	data.forEach(m -> {
 	    m.getMeasurements().forEach(measurement -> {
-		this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).reset();
+		String normalizedValue = varsCh.get(measurement.getVarId()).getValueType().getNormalizedValue(
+			measurement.getMeasures().get(0).getValue(), varsCh.get(measurement.getVarId()));
 
-		Double value = Double.valueOf(measurement.getMeasures().get(0).getValue());
-		this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).add(value);
+		Double value = Double.valueOf(normalizedValue);
+		// Double value = Double.valueOf(measurement.getMeasures().get(0).getValue());
 		monVarValue.put(m.getMonitorId() + "-" + measurement.getVarId(), value);
 	    });
 

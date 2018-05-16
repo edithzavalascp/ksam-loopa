@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.SumConfig;
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.Metrics;
 
 public class Normalizer implements IMonitorOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -31,11 +34,14 @@ public class Normalizer implements IMonitorOperation {
     private boolean isMonitorFaulty;
     private boolean isAnalysisRequired;
     private boolean isBatteryLevelLow;
+    private Map<String, Map<String, DoubleAdder>> monitorMetrics;
 
     private BatteryLevelInspector batteryLevelI;
 
     public Normalizer(SumConfig config) {
 	super();
+	this.monitorMetrics = new HashMap<>();
+
 	this.config = config;
 	this.minSymptoms = 10;
 	this.varsCh = new HashMap<>();
@@ -54,6 +60,19 @@ public class Normalizer implements IMonitorOperation {
 	    this.accumMonSymptoms.put(monitor, 0);
 	});
 	this.isBatteryLevelLow = false;
+
+	// create metrics for monitoring variables
+	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
+	    Map<String, DoubleAdder> metrics = new HashMap<>();
+	    for (String var : m.getMonitorAttributes().getMonitoringVars()) {
+		String metricName = "ksam.me." + this.config.getSystemId() + ".monitor."
+			+ m.getMonitorAttributes().getMonitorId() + ".variable." + var;
+		metrics.put(var, Metrics.gauge(metricName, new DoubleAdder()));
+
+	    }
+	    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
+
+	});
     }
 
     @Override
@@ -69,7 +88,7 @@ public class Normalizer implements IMonitorOperation {
 		this.isMonitorFaulty = false;
 		m.getMeasurements().forEach(measurement -> {
 		    measurement.getMeasures().forEach(measure -> {
-			/*********** Remove after AZ **********/
+			/*********** Remove if persistence of no normalized data is required **********/
 			String filePathNN = "/tmp/weka/" + m.getMonitorId() + "-" + measurement.getVarId()
 				+ "NoNormalized.txt";
 			try {
@@ -87,13 +106,23 @@ public class Normalizer implements IMonitorOperation {
 			}
 			/*********************/
 
-			String normalizedValue = varsCh.get(measurement.getVarId()).getValueType()
-				.getNormalizedValue(measure.getValue(), varsCh.get(measurement.getVarId()));
-			measure.setValue(normalizedValue);
+			/** First version, normalization was done in the monitor **/
+			// String normalizedValue = varsCh.get(measurement.getVarId()).getValueType()
+			// .getNormalizedValue(measure.getValue(), varsCh.get(measurement.getVarId()));
+			// measure.setValue(normalizedValue);
 
-			if (normalizedValue.equals("-1")) {
-			    this.isMonitorFaulty = true;
-			}
+			// if (normalizedValue.equals("-1")) {
+			// this.isMonitorFaulty = true;
+			// }
+			/***********************************************************/
+			this.isMonitorFaulty = VariableValueChecker.isValueOutOfRange(measure.getValue(),
+				varsCh.get(measurement.getVarId()));
+			// measure.setValue(measure.getValue()); // this line is not required if the
+			// value passed is not normalized here.
+
+			this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).reset();
+			this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId())
+				.add(Double.valueOf(measure.getValue()));
 		    });
 		});
 		if (isMonitorFaulty) {
