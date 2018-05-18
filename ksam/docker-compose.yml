@@ -6,6 +6,6 @@ services:
         ports:
             - "8080:8080"
         volumes:
-        - ./weka:/tmp/weka
+        - /weka_ksam/:/tmp/weka
         network_mode: host
         command: "/application.json"

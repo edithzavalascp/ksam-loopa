@@ -46,7 +46,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	if (config.containsKey("meId")) {
 	    this.configs.put(config.get("meId"), Application.meConfigM.getConfigs().get(config.get("meId")));
 	    this.monOperations.put(config.get("meId"),
-		    new Normalizer(this.configs.get(config.get("meId")).getSystemUnderMonitoringConfig()));
+		    new MonitorsChecker(this.configs.get(config.get("meId")).getSystemUnderMonitoringConfig()));
 	    this.managerPolicy.update(new Policy(this.managerPolicy.getPolicyOwner(), config));
 	} else if (config.containsKey("newMinSymptoms")) {
 	    this.monOperations.get(config.get("systemId"))

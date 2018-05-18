@@ -16,18 +16,24 @@ public class OpenDlvContextPersister implements IContextPersister {
     @Override
     public Map<String, Integer> updateContext(List<Entry<String, Object>> context) {
 	Map<String, Integer> ctxVarsVals = new HashMap<>();
-	context.forEach(ctx -> {
-	    if (ctx.getKey().equals("services")) {
-		List<String> x = (List<String>) ctx.getValue();
-		this.contextVars.forEach(var -> {
-		    if (x.contains(var)) {
-			ctxVarsVals.put(var, 1);
-		    } else {
-			ctxVarsVals.put(var, 0);
-		    }
-		});
-	    }
-	});
+	if (context != null) {
+	    context.forEach(ctx -> {
+		if (ctx.getKey().equals("services")) {
+		    List<String> x = (List<String>) ctx.getValue();
+		    this.contextVars.forEach(var -> {
+			if (x.contains(var)) {
+			    ctxVarsVals.put(var, 1);
+			} else {
+			    ctxVarsVals.put(var, 0);
+			}
+		    });
+		}
+	    });
+	} else {
+	    this.contextVars.forEach(var -> {
+		ctxVarsVals.put(var, 0);
+	    });
+	}
 	return ctxVarsVals;
     }
 

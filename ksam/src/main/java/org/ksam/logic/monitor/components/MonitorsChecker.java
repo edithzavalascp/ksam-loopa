@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.SumConfig;
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
+import org.ksam.model.configuration.supportedvalues.VariableValueType;
 import org.ksam.model.monitoringData.MonitoringData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.micrometer.core.instrument.Metrics;
 
-public class Normalizer implements IMonitorOperation {
+public class MonitorsChecker implements IMonitorOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private final SumConfig config;
     private final Map<String, VariableValueCharacteristics> varsCh;
@@ -38,7 +39,7 @@ public class Normalizer implements IMonitorOperation {
 
     private BatteryLevelInspector batteryLevelI;
 
-    public Normalizer(SumConfig config) {
+    public MonitorsChecker(SumConfig config) {
 	super();
 	this.monitorMetrics = new HashMap<>();
 
@@ -121,8 +122,17 @@ public class Normalizer implements IMonitorOperation {
 			// value passed is not normalized here.
 
 			this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).reset();
-			this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId())
-				.add(Double.valueOf(measure.getValue()));
+
+			// The variable type should be check against NOMINAL/NUMERIC, variable value
+			// type has been used for
+			// the sake of simplicity, i.e., varsCh are already saved for other purposes and
+			// her is reused. In
+			// this way we assume INT and DOUBLE are always NUMERIC
+			this.monitorMetrics.get(m.getMonitorId()).get(measurement.getVarId()).add(
+				!(varsCh.get(measurement.getVarId()).getValueType().equals(VariableValueType.STRING))
+					? Double.valueOf(measure.getValue())
+					: Double.valueOf(varsCh.get(measurement.getVarId()).getValues()
+						.indexOf(measure.getValue())));
 		    });
 		});
 		if (isMonitorFaulty) {

@@ -13,7 +13,7 @@ public class VariableValueChecker {
 	    return Double.valueOf(value) < Double.valueOf(ch.getValues().get(0))
 		    || Double.valueOf(value) > Double.valueOf(ch.getValues().get(1)) ? true : false;
 	case BOOLEAN:
-	    return !(value.equals("true") || value.equals("false")) ? true : false;
+	    return !(value.equals("0") || value.equals("1")) ? true : false;
 	case INT:
 	    // TODO For nominal values
 	    return Integer.valueOf(value) < Integer.valueOf(ch.getValues().get(0))

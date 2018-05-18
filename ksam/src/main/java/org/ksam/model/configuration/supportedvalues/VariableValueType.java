@@ -1,6 +1,8 @@
 package org.ksam.model.configuration.supportedvalues;
 
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public enum VariableValueType {
 
@@ -11,7 +13,7 @@ public enum VariableValueType {
 	    if (ch.getValues().indexOf(value) == -1) {
 		return "-1";
 	    }
-	    return String.valueOf((1 / ch.getValues().size()) * (ch.getValues().indexOf(value) + 1));
+	    return String.valueOf((1.0 / ch.getValues().size()) * (ch.getValues().indexOf(value) + 1));
 	}
 
     },
@@ -32,10 +34,10 @@ public enum VariableValueType {
 
 	@Override
 	public String getNormalizedValue(String value, VariableValueCharacteristics ch) {
-	    if (!(value.equals("true") || value.equals("false"))) {
+	    if (!(value.equals("0") || value.equals("1"))) {
 		return "-1";
 	    }
-	    return Boolean.valueOf(value) ? "1" : "0";
+	    return value;
 	}
 
     },
@@ -52,6 +54,8 @@ public enum VariableValueType {
 	}
 
     };
+    protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
     public abstract String getNormalizedValue(String value, VariableValueCharacteristics ch);
+
 }

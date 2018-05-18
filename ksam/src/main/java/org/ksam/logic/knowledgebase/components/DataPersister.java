@@ -71,7 +71,6 @@ public class DataPersister implements IKbOperation {
 	    m.getMeasurements().forEach(measurement -> {
 		String normalizedValue = varsCh.get(measurement.getVarId()).getValueType().getNormalizedValue(
 			measurement.getMeasures().get(0).getValue(), varsCh.get(measurement.getVarId()));
-
 		Double value = Double.valueOf(normalizedValue);
 		// Double value = Double.valueOf(measurement.getMeasures().get(0).getValue());
 		monVarValue.put(m.getMonitorId() + "-" + measurement.getVarId(), value);
