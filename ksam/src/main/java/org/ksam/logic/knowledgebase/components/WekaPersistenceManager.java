@@ -54,7 +54,9 @@ public class WekaPersistenceManager {
 	this.dataToPersistInArff.subscribe(monVarData -> arffFilePersister.execute(() -> {
 	    this.pMonsVarsRuntimeData.forEach((k, v) -> {
 		if (monVarData.keySet().contains(k)) {
-		    this.pMonsVarsRuntimeData.put(k, this.mvrT.getValueRange(k.split("-")[1], monVarData.get(k)));
+		    // this.pMonsVarsRuntimeData.put(k, this.mvrT.getValueRange(k.split("-")[1],
+		    // monVarData.get(k)));
+		    this.pMonsVarsRuntimeData.put(k, String.valueOf(monVarData.get(k)));
 		}
 		if (this.inactiveMons.contains(k.split("-")[0])) {
 		    this.pMonsVarsRuntimeData.put(k, "?");
@@ -102,7 +104,9 @@ public class WekaPersistenceManager {
 	String header = "@relation " + this.meId + "\n\n";
 
 	for (String monVar : this.pMonsVarsRuntimeData.keySet()) {
-	    header += "@attribute " + monVar + " " + this.mvrT.getVarRanges(monVar.split("-")[1]) + "\n";
+	    // header += "@attribute " + monVar + " " +
+	    // this.mvrT.getVarRanges(monVar.split("-")[1]) + "\n";
+	    header += "@attribute " + monVar + " numeric\n";
 	}
 
 	for (String ctxVar : this.contextVarsValues.keySet()) {
