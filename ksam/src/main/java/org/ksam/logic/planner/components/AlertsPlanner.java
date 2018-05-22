@@ -66,8 +66,6 @@ public class AlertsPlanner implements IPlannerOperation {
     @Override
     public void updatePlanAlgorithmParameters(List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
-	// TODO Auto-generated method stub
-
     }
 
     @Override

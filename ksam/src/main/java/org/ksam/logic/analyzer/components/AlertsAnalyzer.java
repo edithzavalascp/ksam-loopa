@@ -63,11 +63,13 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 		this.accumMonAlert.put(faultym, this.accumMonAlert.get(faultym) + 1);
 		if (this.accumMonAlert.get(faultym) == minAlerts) {
 		    this.accumMonAlert.put(faultym, 0);
-		    this.faultyMonsIteration.add(faultym);
 		    // TODO Modify for supporting more than one algorithm, trigger a thread per
 		    // method and merge results
 		    this.varsMonsToPlan
 			    .putAll(this.techAlgorithms.get(0).doAnalysis(faultym, analysisAlert.getAlertType()));
+		    if (!this.varsMonsToPlan.isEmpty()) {
+			this.faultyMonsIteration.add(faultym);
+		    }
 		}
 	    });
 	    break;
@@ -105,6 +107,7 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 	this.varsMonsToPlan.forEach((k, v) -> varsMonsToPlanIteration.put(k, v));
 	this.varsMonsToPlan.clear();
 	// check any variables contains faulty monitors
+	// LOGGER.info("FaultyMonsI: " + this.faultyMonsIteration.toString());
 	varsMonsToPlanIteration.forEach((k, v) -> this.faultyMonsIteration.forEach(fmon -> v.remove(fmon)));
 	this.faultyMonsIteration.clear();
 	return varsMonsToPlanIteration;

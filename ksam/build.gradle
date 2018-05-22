@@ -35,6 +35,9 @@ dependencies {
     compile("org.uma.jmetal:jmetal:5.5")
     
 	compile 'io.micrometer:micrometer-registry-graphite:1.0.3'
+	
+	// https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable
+    compile group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.6.12'
     
     compile (project(':loopa')){
        exclude group: 'org.slf4j'

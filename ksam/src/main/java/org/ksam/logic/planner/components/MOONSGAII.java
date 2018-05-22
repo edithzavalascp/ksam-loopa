@@ -135,7 +135,6 @@ public class MOONSGAII implements IPlanMethod {
 		if (!entry.getValue().isEmpty()) {
 		    String minCostMonId = entry.getValue().get(0);
 		    for (String mId : entry.getValue()) {
-			// LOGGER.info("Alternative monitor: " + mId);
 			minCostMonId = this.monsCost.get(mId) < this.monsCost.get(minCostMonId) ? mId : minCostMonId;
 		    }
 		    entry.getValue().remove(minCostMonId);

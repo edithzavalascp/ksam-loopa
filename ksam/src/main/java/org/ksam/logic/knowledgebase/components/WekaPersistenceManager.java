@@ -31,15 +31,17 @@ public class WekaPersistenceManager {
     private final String filePath;
     private PublishSubject<Map<String, Double>> dataToPersistInArff;
     private final ExecutorService arffFilePersister = Executors.newSingleThreadExecutor();
-    private final MonVarsRangesTranslator mvrT;
-
+    // private final MonVarsRangesTranslator mvrT;
     private List<String> inactiveMons;
+
+    private final PositionPersistenceManager pm; // Specific to opendlv
 
     public WekaPersistenceManager(String meId, Map<String, Monitor> monitors, List<String> persistenceMonitors,
 	    List<MonitoringVariable> monVars, List<String> contextVars) {
 	super();
+	this.pm = new PositionPersistenceManager();
 	this.meId = meId;
-	this.mvrT = new MonVarsRangesTranslator(monVars);
+	// this.mvrT = new MonVarsRangesTranslator(monVars);
 	this.persistenceMonitors = persistenceMonitors;
 	this.filePath = "/tmp/weka/" + this.meId + ".arff";
 	this.pMonsVarsRuntimeData = new HashMap<>();
@@ -56,13 +58,13 @@ public class WekaPersistenceManager {
 		if (monVarData.keySet().contains(k)) {
 		    // this.pMonsVarsRuntimeData.put(k, this.mvrT.getValueRange(k.split("-")[1],
 		    // monVarData.get(k)));
-		    this.pMonsVarsRuntimeData.put(k, String.valueOf(monVarData.get(k)));
+		    this.pMonsVarsRuntimeData.put(k, monVarData.get(k) < 0 ? "?" : String.valueOf(monVarData.get(k)));
 		}
 		if (this.inactiveMons.contains(k.split("-")[0])) {
 		    this.pMonsVarsRuntimeData.put(k, "?");
 		}
 	    });
-
+	    this.pm.setPoint(this.pMonsVarsRuntimeData);
 	    setToArffFile("\n"
 		    + this.pMonsVarsRuntimeData.values().toString()
 			    .substring(1, this.pMonsVarsRuntimeData.values().toString().length() - 1).replace(" ", "")
