@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+
 public class PlannerFleManager implements IPlannerFleManager {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -34,10 +37,13 @@ public class PlannerFleManager implements IPlannerFleManager {
     private Map<String, MeConfig> config;
     private Map<String, IPlannerOperation> plannerOperations;
 
+    private Counter plannerCalls;
+
     public PlannerFleManager() {
 	this.config = new HashMap<>();
 	this.managerPolicy = new Policy(this.getClass().getName(), new HashMap<String, String>());
 	this.plannerOperations = new HashMap<>();
+	this.plannerCalls = Metrics.counter("ksam.planner.calls");
     }
 
     @Override
@@ -53,6 +59,7 @@ public class PlannerFleManager implements IPlannerFleManager {
     @Override
     public void processLogicData(Map<String, String> planData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive analysis data");
+	this.plannerCalls.increment();
 	try {
 	    ObjectMapper mapper = new ObjectMapper();
 	    PlanAlert data = mapper.readValue(planData.get("content"), PlanAlert.class);

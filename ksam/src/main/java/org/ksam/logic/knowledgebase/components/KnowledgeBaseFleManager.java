@@ -17,6 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+
 public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -26,10 +29,13 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
     private Map<String, MeConfig> configs;
     private Map<String, IKbOperation> kbOperations;
 
+    private Counter kbCalls;
+
     public KnowledgeBaseFleManager() {
 	this.configs = new HashMap<>();
 	this.managerPolicy = new Policy(this.getClass().getName(), new HashMap<String, String>());
 	this.kbOperations = new HashMap<String, IKbOperation>();
+	this.kbCalls = Metrics.counter("ksam.kb.calls");
     }
 
     @Override
@@ -45,6 +51,7 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 
     @Override
     public void processLogicData(Map<String, String> monData) {
+	this.kbCalls.increment();
 	switch (monData.get("contentType")) {
 	case "MonitoringData":
 	    LOGGER.info(this.getComponent().getElement().getElementId() + " | persist monitoring data");

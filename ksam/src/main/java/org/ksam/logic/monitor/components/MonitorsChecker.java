@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.SumConfig;
@@ -36,6 +37,7 @@ public class MonitorsChecker implements IMonitorOperation {
     private boolean isAnalysisRequired;
     private boolean isBatteryLevelLow;
     private Map<String, Map<String, DoubleAdder>> monitorMetrics;
+    private AtomicInteger symptoms;
 
     private BatteryLevelInspector batteryLevelI;
 
@@ -74,6 +76,8 @@ public class MonitorsChecker implements IMonitorOperation {
 	    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
 
 	});
+	this.symptoms = Metrics.gauge("ksam.monitor.symptoms", new AtomicInteger());
+	this.symptoms.set(0);
     }
 
     @Override
@@ -137,8 +141,10 @@ public class MonitorsChecker implements IMonitorOperation {
 		});
 		if (isMonitorFaulty) {
 		    this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
+		    this.symptoms.set(this.symptoms.get() + 1);
 		    if (this.accumMonSymptoms.get(m.getMonitorId()) == this.minSymptoms) {
 			this.accumMonSymptoms.put(m.getMonitorId(), 0);
+			this.symptoms.set(0);
 			this.faultyMonitorsIteration.add(m.getMonitorId());
 			if (!this.faultyMonitors.contains(m.getMonitorId())) {
 			    this.faultyMonitors.add(m.getMonitorId());
@@ -150,6 +156,7 @@ public class MonitorsChecker implements IMonitorOperation {
 		    }
 		} else {
 		    this.accumMonSymptoms.put(m.getMonitorId(), 0);
+		    this.symptoms.set(0);
 		    if (this.faultyMonitors.contains(m.getMonitorId())) {
 			this.faultyMonitors.remove(m.getMonitorId());
 			this.recoveredMonitors.add(m.getMonitorId());

@@ -23,7 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;;
 
 public class MonitorFleManager implements IMonitorFleManager {
 
@@ -34,10 +37,13 @@ public class MonitorFleManager implements IMonitorFleManager {
     private Map<String, MeConfig> configs;
     private Map<String, IMonitorOperation> monOperations;
 
+    private Counter monitorCalls;
+
     public MonitorFleManager() {
 	this.configs = new HashMap<>();
 	this.managerPolicy = new Policy(this.getClass().getName(), new HashMap<String, String>());
 	this.monOperations = new HashMap<String, IMonitorOperation>();
+	this.monitorCalls = Metrics.counter("ksam.monitor.calls");
     }
 
     @Override
@@ -58,6 +64,7 @@ public class MonitorFleManager implements IMonitorFleManager {
     @Override
     public void processLogicData(Map<String, String> monData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive monitoring data");
+	this.monitorCalls.increment();
 	MonitoringData nomalizedData = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
 	sendMonDataToKB(nomalizedData);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {

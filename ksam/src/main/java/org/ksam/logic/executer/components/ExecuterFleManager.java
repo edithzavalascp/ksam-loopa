@@ -20,6 +20,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
+
 public class ExecuterFleManager implements IExecuterFleManager {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
@@ -27,16 +30,19 @@ public class ExecuterFleManager implements IExecuterFleManager {
     private IPolicy managerPolicy = new Policy("ExecuterFleManager", null);
 
     private ILoopAElementComponent owner = null;
+    private Counter executerCalls;
 
     @Override
     public void setConfiguration(Map<String, String> config) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
 	this.managerPolicy.setPolicyContent(config);
+	this.executerCalls = Metrics.counter("ksam.executer.calls");
     }
 
     @Override
     public void processLogicData(Map<String, String> monData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive adaptation to execute");
+	this.executerCalls.increment();
 	try {
 	    ObjectMapper mapper = new ObjectMapper();
 	    ExecuteAlert data = mapper.readValue(monData.get("content"), ExecuteAlert.class);

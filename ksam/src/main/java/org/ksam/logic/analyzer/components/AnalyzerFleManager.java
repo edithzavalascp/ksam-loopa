@@ -24,11 +24,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class AnalyzerFleManager implements IAnalyzerFleManager {
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
 
-    /**
-     * TODO PROACTIVITY!!!!!!!!!!!!!
-     */
+public class AnalyzerFleManager implements IAnalyzerFleManager {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private IPolicy managerPolicy = new Policy("AnalyzerFleManager", null);
     private ILoopAElementComponent owner = null;
@@ -36,10 +35,13 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
     private Map<String, MeConfig> config;
     private Map<String, IAnalyzerOperation> analysisOperations;
 
+    private Counter analyzerCalls;
+
     public AnalyzerFleManager() {
 	this.config = new HashMap<>();
 	this.managerPolicy = new Policy(this.getClass().getName(), new HashMap<String, String>());
 	this.analysisOperations = new HashMap<String, IAnalyzerOperation>();
+	this.analyzerCalls = Metrics.counter("ksam.analyzer.calls");
     }
 
     @Override
@@ -58,6 +60,7 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
     @Override
     public void processLogicData(Map<String, String> analysisData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive alert");
+	this.analyzerCalls.increment();
 	try {
 	    ObjectMapper mapper = new ObjectMapper();
 	    AnalysisAlert data = mapper.readValue(analysisData.get("content"), AnalysisAlert.class);
