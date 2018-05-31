@@ -131,10 +131,16 @@ public class MLJRip implements IAnalysisMethod {
 		    for (int i = 0; i < positions.length; i++) {
 
 			String latlon = this.posMan.getLatLon(positions[i]);
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+			// datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+			// Double.valueOf(latlon.split(",")[0]));
+			// datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+			// Double.valueOf(latlon.split(",")[1]));
+
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
 				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
 				Double.valueOf(latlon.split(",")[1]));
+
 			datasetPredictJ.instance(i).setClassMissing();
 		    }
 

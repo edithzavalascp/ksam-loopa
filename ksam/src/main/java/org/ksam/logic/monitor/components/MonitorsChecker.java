@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 
 import org.ksam.model.configuration.SumConfig;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 
 public class MonitorsChecker implements IMonitorOperation {
@@ -37,14 +37,15 @@ public class MonitorsChecker implements IMonitorOperation {
     private boolean isAnalysisRequired;
     private boolean isBatteryLevelLow;
     private Map<String, Map<String, DoubleAdder>> monitorMetrics;
-    private AtomicInteger symptoms;
+    private Counter symptoms;
 
     private BatteryLevelInspector batteryLevelI;
+    private boolean lowBatteryLevelReported;
 
     public MonitorsChecker(SumConfig config) {
 	super();
 	this.monitorMetrics = new HashMap<>();
-
+	this.lowBatteryLevelReported = false;
 	this.config = config;
 	this.minSymptoms = 10;
 	this.varsCh = new HashMap<>();
@@ -76,8 +77,7 @@ public class MonitorsChecker implements IMonitorOperation {
 	    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
 
 	});
-	this.symptoms = Metrics.gauge("ksam.monitor.symptoms", new AtomicInteger());
-	this.symptoms.set(0);
+	this.symptoms = Metrics.counter("ksam.monitor.symptoms");
     }
 
     @Override
@@ -141,10 +141,10 @@ public class MonitorsChecker implements IMonitorOperation {
 		});
 		if (isMonitorFaulty) {
 		    this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
-		    this.symptoms.set(this.symptoms.get() + 1);
+		    this.symptoms.increment();
 		    if (this.accumMonSymptoms.get(m.getMonitorId()) == this.minSymptoms) {
 			this.accumMonSymptoms.put(m.getMonitorId(), 0);
-			this.symptoms.set(0);
+			this.symptoms.increment(this.symptoms.count() * -1);
 			this.faultyMonitorsIteration.add(m.getMonitorId());
 			if (!this.faultyMonitors.contains(m.getMonitorId())) {
 			    this.faultyMonitors.add(m.getMonitorId());
@@ -156,7 +156,7 @@ public class MonitorsChecker implements IMonitorOperation {
 		    }
 		} else {
 		    this.accumMonSymptoms.put(m.getMonitorId(), 0);
-		    this.symptoms.set(0);
+		    this.symptoms.increment(this.symptoms.count() * -1);
 		    if (this.faultyMonitors.contains(m.getMonitorId())) {
 			this.faultyMonitors.remove(m.getMonitorId());
 			this.recoveredMonitors.add(m.getMonitorId());
@@ -168,7 +168,7 @@ public class MonitorsChecker implements IMonitorOperation {
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-	this.isBatteryLevelLow = this.batteryLevelI.isBatteryLevelLow();
+	this.isBatteryLevelLow = !this.lowBatteryLevelReported ? this.batteryLevelI.isBatteryLevelLow() : false;
 	return normalizedData;
     }
 
@@ -176,6 +176,10 @@ public class MonitorsChecker implements IMonitorOperation {
     public boolean isAnalysisRequired() {
 	this.isAnalysisRequired = this.faultyMonitorsIteration.isEmpty() && this.recoveredMonitors.isEmpty()
 		&& !this.isBatteryLevelLow ? false : true;
+	if (this.isBatteryLevelLow) {
+	    this.symptoms.increment();
+	    this.lowBatteryLevelReported = true;
+	}
 	return this.isAnalysisRequired;
     }
 
