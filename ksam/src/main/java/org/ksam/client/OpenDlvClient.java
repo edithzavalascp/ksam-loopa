@@ -12,6 +12,7 @@ public class OpenDlvClient implements IEffectorEnactor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenDlvClient.class);
     private static final String HOST_NAME = "localhost";
     private static final int PORT = 8082;
+    private final boolean simulation = false;
 
     private final String vehicleId;
 
@@ -22,29 +23,34 @@ public class OpenDlvClient implements IEffectorEnactor {
 
     @Override
     public void enact(MonitorAdaptation a) {
-	try {
-	    Socket socket = new Socket(HOST_NAME, PORT);
+	// TODO Get action and monitor from MonitorAdaptation object
+	String dataString = "VehicleId:" + this.vehicleId
+		+ (!a.getMonitorsToAdd().isEmpty()
+			? ";MonitorsToAdd:" + a.getMonitorsToAdd().toString()
+				.substring(1, a.getMonitorsToAdd().toString().length() - 1).replace(", ", ",")
+			: ";MonitorsToAdd:")
+		+ (!a.getMonitorsToRemove().isEmpty()
+			? ";MonitorsToRemove:" + a.getMonitorsToRemove().toString()
+				.substring(1, a.getMonitorsToRemove().toString().length() - 1).replace(", ", ",")
+			: ";MonitorsToRemove:" + "\0");
 
-	    DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-	    // TODO Get action and monitor from MonitorAdaptation object
-	    String dataString = "VehicleId:" + this.vehicleId
-		    + (!a.getMonitorsToAdd().isEmpty()
-			    ? ";MonitorsToAdd:" + a.getMonitorsToAdd().toString()
-				    .substring(1, a.getMonitorsToAdd().toString().length() - 1).replace(", ", ",")
-			    : ";MonitorsToAdd:")
-		    + (!a.getMonitorsToRemove().isEmpty()
-			    ? ";MonitorsToRemove:" + a.getMonitorsToRemove().toString()
-				    .substring(1, a.getMonitorsToRemove().toString().length() - 1).replace(", ", ",")
-			    : ";MonitorsToRemove:" + "\0");
-	    byte[] data = dataString.getBytes();
-	    dos.write(data);
+	if (simulation) {
+	    try {
+		Socket socket = new Socket(HOST_NAME, PORT);
+
+		DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+		byte[] data = dataString.getBytes();
+		dos.write(data);
+		LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
+			+ dataString);
+
+		dos.close();
+		socket.close();
+	    } catch (IOException e) {
+	    }
+	} else {
 	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
 		    + dataString);
-
-	    dos.close();
-	    socket.close();
-	} catch (IOException e) {
-	    // LOGGER.error(e.getMessage());
 	}
     }
 

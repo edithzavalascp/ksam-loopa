@@ -27,7 +27,6 @@ import weka.core.converters.ConverterUtils.DataSource;
 
 public class MLJRip implements IAnalysisMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private final String URL_WEKA = "http://localhost:8085/";
     private List<Entry<String, String>> algorithmParams;
     private List<Entry<String, String>> evalParams;
     private SumConfig config;
@@ -38,6 +37,10 @@ public class MLJRip implements IAnalysisMethod {
     private boolean dmDoneOnLowBattery;
 
     private AtomicInteger adaptationNeeded;
+
+    // this variables should be set in a config file
+    private final String URL_WEKA = "http://localhost:8085/";
+    private final boolean simulation = false;
 
     public MLJRip(SumConfig config, List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
@@ -127,20 +130,23 @@ public class MLJRip implements IAnalysisMethod {
 		    }
 		    // Substitute positions for predicted using weka library -- monitors names may
 		    // change from one ME to another and from one environment to other.
+		    // TODO Read them from config file.
 		    String[] positions = response.getBody().split(" ");
 		    for (int i = 0; i < positions.length; i++) {
 
 			String latlon = this.posMan.getLatLon(positions[i]);
-			// datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
-			// Double.valueOf(latlon.split(",")[0]));
-			// datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
-			// Double.valueOf(latlon.split(",")[1]));
-
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
-				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
-				Double.valueOf(latlon.split(",")[1]));
-
+			if (simulation) {
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+				    Double.valueOf(latlon.split(",")[0]));
+			    datasetPredictJ.instance(i).setValue(
+				    datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+				    Double.valueOf(latlon.split(",")[1]));
+			} else {
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
+				    Double.valueOf(latlon.split(",")[0]));
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
+				    Double.valueOf(latlon.split(",")[1]));
+			}
 			datasetPredictJ.instance(i).setClassMissing();
 		    }
 
@@ -255,14 +261,22 @@ public class MLJRip implements IAnalysisMethod {
 		}
 		// Substitute positions for predicted using weka library -- monitors names may
 		// change from one ME to another and from one environment to other.
+		// TODO Read them from config file.
 		String[] positions = response.getBody().split(" ");
 		for (int i = 0; i < positions.length; i++) {
 
 		    String latlon = this.posMan.getLatLon(positions[i]);
-		    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
-			    Double.valueOf(latlon.split(",")[0]));
-		    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
-			    Double.valueOf(latlon.split(",")[1]));
+		    if (simulation) {
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+				Double.valueOf(latlon.split(",")[0]));
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+				Double.valueOf(latlon.split(",")[1]));
+		    } else {
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
+				Double.valueOf(latlon.split(",")[0]));
+			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
+				Double.valueOf(latlon.split(",")[1]));
+		    }
 		    datasetPredictJ.instance(i).setClassMissing();
 		}
 

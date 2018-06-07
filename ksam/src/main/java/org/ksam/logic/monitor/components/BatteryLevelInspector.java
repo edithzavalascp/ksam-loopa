@@ -21,7 +21,7 @@ public class BatteryLevelInspector {
 	this.monitorsCost = new HashMap<>();
 	String metricName = "ksam.me." + systemId + ".monitor.batterylevelsensor.variable.batterylevel";
 	batteryLevel = Metrics.gauge(metricName, new DoubleAdder());
-	batteryLevel.add(1);
+	batteryLevel.add(0.55);
 	monitors.forEach(monitor -> this.monitorsCost.put(monitor.getMonitorAttributes().getMonitorId(),
 		monitor.getMonitorAttributes().getCost().getValue()));
     }
@@ -29,7 +29,7 @@ public class BatteryLevelInspector {
     public void reduceBattery(String monitorId) {
 	double reduce = (this.monitorsCost.get(monitorId) / 100000) * -1;
 	batteryLevel.add(reduce);
-	// LOGGER.info("Curent battery: " + batteryLevel.doubleValue());
+	LOGGER.info("Curent battery: " + batteryLevel.doubleValue());
     }
 
     public boolean isBatteryLevelLow() {

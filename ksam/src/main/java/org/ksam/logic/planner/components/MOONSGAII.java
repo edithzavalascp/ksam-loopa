@@ -88,9 +88,7 @@ public class MOONSGAII implements IPlanMethod {
 	    // remove
 	    MonitorAdaptation adaptB = new MonitorAdaptation();
 	    List<String> monitorsToAddB = new ArrayList<>();
-	    List<String> monitorsToRemoveB = new ArrayList<>(); // Don't remove faulty
-	    // monitors, once they are up again they could be re-incorporated. Particularly,
-	    // if they are cheaper.
+	    List<String> monitorsToRemoveB = new ArrayList<>();
 	    adaptB.setAdaptId("LOWBATTERYLEVEL" + planAlert.getSystemId());
 
 	    // Substitute this simplified algorithm for the genetic one - take into account
