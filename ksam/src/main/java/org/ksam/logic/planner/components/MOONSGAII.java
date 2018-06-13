@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.ksam.logic.analyzer.components.IContextAnalyzer;
 import org.ksam.model.adaptation.MonitorAdaptation;
 import org.ksam.model.configuration.SumConfig;
 import org.ksam.model.planData.PlanAlert;
@@ -24,6 +25,9 @@ public class MOONSGAII implements IPlanMethod {
 
     private List<String> activeMonitors;
     private Map<String, AtomicInteger> monitorMetrics;
+    private List<String> requiredVars;
+
+    private IContextAnalyzer ctxPlanner;
 
     public MOONSGAII(SumConfig config, List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
@@ -33,6 +37,7 @@ public class MOONSGAII implements IPlanMethod {
 	this.evalParams = evalParams;
 	this.monsCost = new HashMap<>();
 	this.monitorMetrics = new HashMap<>();
+	this.requiredVars = new ArrayList<>();
 	this.activeMonitors = this.config.getSystemConfiguration().getMonitorConfig().getInitialActiveMonitors();
 	// TODO Check different types of costs, how to managed that?
 	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
@@ -93,9 +98,13 @@ public class MOONSGAII implements IPlanMethod {
 
 	    // Substitute this simplified algorithm for the genetic one - take into account
 	    // context in Analysis
+
+	    List<String> allMonitors = this.config.getSystemVariables().getMonitorVars().getMonitors();
+
+	    /** SELECT BEST ALTERNATIVE MONITORS FOR THE VARIABLES REQUIRED **/
 	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
 		if (!entry.getValue().isEmpty()) {
-
+		    allMonitors.remove(entry.getValue());
 		    String minCostMonId = entry.getValue().get(0);
 		    for (String m : entry.getValue()) {
 			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
@@ -118,6 +127,14 @@ public class MOONSGAII implements IPlanMethod {
 		    }
 		}
 	    }
+	    /** REMOVE ALL MONITORS THAT ARE NOT ASSOCIATED TO REQUIRED VARIABLES **/
+	    allMonitors.forEach(monNoReq -> {
+		if (this.activeMonitors.contains(monNoReq)) {
+		    monitorsToRemoveB.add(monNoReq);
+		    this.activeMonitors.remove(monNoReq);
+		    this.monitorMetrics.get(monNoReq).set(0);
+		}
+	    });
 	    adaptB.setMonitorsToAdd(monitorsToAddB);
 	    adaptB.setMonitorsToRemove(monitorsToRemoveB);
 	    adaptations.add(adaptB);

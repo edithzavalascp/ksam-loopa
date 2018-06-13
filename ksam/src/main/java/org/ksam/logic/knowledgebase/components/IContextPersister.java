@@ -6,5 +6,5 @@ import java.util.Map.Entry;
 
 public interface IContextPersister {
 
-    public Map<String, Integer> updateContext(List<Entry<String, Object>> context);
+    Map<String, Integer> updateContext(List<Entry<String, Object>> context);
 }

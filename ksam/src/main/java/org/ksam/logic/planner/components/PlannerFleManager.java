@@ -59,28 +59,34 @@ public class PlannerFleManager implements IPlannerFleManager {
     @Override
     public void processLogicData(Map<String, String> planData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive analysis data");
-	this.plannerCalls.increment();
-	try {
-	    ObjectMapper mapper = new ObjectMapper();
-	    PlanAlert data = mapper.readValue(planData.get("content"), PlanAlert.class);
-	    this.plannerOperations.get(data.getSystemId()).doPlanOperation(data);
+	switch (planData.get("contentType")) {
+	case "PlanAlert":
+	    this.plannerCalls.increment();
+	    try {
+		ObjectMapper mapper = new ObjectMapper();
+		PlanAlert data = mapper.readValue(planData.get("content"), PlanAlert.class);
+		this.plannerOperations.get(data.getSystemId()).doPlanOperation(data);
 
-	    if (this.plannerOperations.get(data.getSystemId()).isAdaptationRequired()) {
-		ExecuteAlert ea = new ExecuteAlert();
-		ea.setSystemId(data.getSystemId());
-		ea.setMonAdaptations(this.plannerOperations.get(data.getSystemId()).getAdaptationsPlanned());
-		if (ea.getMonAdaptations() != null) {
-		    sendPlanDataToExecute(ea);
-		    PlanData pd = new PlanData();
-		    pd.setSystemId(data.getSystemId());
-		    pd.setActiveMonitors(this.plannerOperations.get(data.getSystemId()).getUpdatedActiveMonitors());
-		    sendMonDataToKB(pd);
-		} else {
-		    LOGGER.info(this.getComponent().getElement().getElementId() + " | no adaptation required");
+		if (this.plannerOperations.get(data.getSystemId()).isAdaptationRequired()) {
+		    ExecuteAlert ea = new ExecuteAlert();
+		    ea.setSystemId(data.getSystemId());
+		    ea.setMonAdaptations(this.plannerOperations.get(data.getSystemId()).getAdaptationsPlanned());
+		    if (ea.getMonAdaptations() != null) {
+			sendPlanDataToExecute(ea);
+			PlanData pd = new PlanData();
+			pd.setSystemId(data.getSystemId());
+			pd.setActiveMonitors(this.plannerOperations.get(data.getSystemId()).getUpdatedActiveMonitors());
+			sendMonDataToKB(pd);
+		    } else {
+			LOGGER.info(this.getComponent().getElement().getElementId() + " | no adaptation required");
+		    }
 		}
+	    } catch (IOException e) {
+		e.printStackTrace();
 	    }
-	} catch (IOException e) {
-	    e.printStackTrace();
+	    break;
+	default:
+	    break;
 	}
     }
 

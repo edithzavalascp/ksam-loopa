@@ -101,6 +101,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.ANALYZE.toString(),
 		    jsonAnalysisAlert);
 	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send alert to analysis");
+	    messageContent.getMessageBody().put("contentType", "AnalysisAlert");
 
 	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());

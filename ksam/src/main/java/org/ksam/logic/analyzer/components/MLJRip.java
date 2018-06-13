@@ -37,6 +37,7 @@ public class MLJRip implements IAnalysisMethod {
     private boolean dmDoneOnLowBattery;
 
     private AtomicInteger adaptationNeeded;
+    private IContextAnalyzer ctxAnalyzer;
 
     // this variables should be set in a config file
     private final String URL_WEKA = "http://localhost:8085/";
@@ -46,6 +47,7 @@ public class MLJRip implements IAnalysisMethod {
 	    List<Entry<String, String>> evalParams) {
 	super();
 	this.config = config;
+	this.ctxAnalyzer = new OpenDlvContextAnalyzer(this.config);
 	this.algorithmParams = algorithmParams;
 	this.evalParams = evalParams;
 	this.posMan = new PositionAnalysisManager();
@@ -322,7 +324,12 @@ public class MLJRip implements IAnalysisMethod {
 		}
 
 		if (lfNeeded) {
-		    this.varsMons.forEach((k, v) -> alternativeMons.put(k, v));
+		    List<String> reqVars = this.ctxAnalyzer.getRequiredVars();
+		    this.varsMons.forEach((k, v) -> {
+			if (reqVars.contains(k)) {
+			    alternativeMons.put(k, v);
+			}
+		    });
 
 		    // Copy last available runtimedata
 		    try {
@@ -353,6 +360,11 @@ public class MLJRip implements IAnalysisMethod {
 	}
 
 	return alternativeMons;
+    }
+
+    @Override
+    public void updateContext(List<Entry<String, Object>> context) {
+	this.ctxAnalyzer.updateContext(context);
     }
 
 }

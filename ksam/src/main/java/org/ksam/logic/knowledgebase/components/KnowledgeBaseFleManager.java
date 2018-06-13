@@ -5,9 +5,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.ksam.api.Application;
+import org.ksam.model.analysisData.AnalysisContextData;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.monitoringData.MonitoringData;
 import org.ksam.model.planData.PlanData;
+import org.loopa.comm.message.AMMessageBodyType;
+import org.loopa.comm.message.IMessage;
+import org.loopa.comm.message.LoopAElementMessageBody;
+import org.loopa.comm.message.LoopAElementMessageCode;
+import org.loopa.comm.message.Message;
+import org.loopa.comm.message.MessageType;
 import org.loopa.element.functionallogic.enactor.knowledgebase.IKnowledgeBaseFleManager;
 import org.loopa.generic.element.component.ILoopAElementComponent;
 import org.loopa.policy.IPolicy;
@@ -15,6 +22,7 @@ import org.loopa.policy.Policy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.micrometer.core.instrument.Counter;
@@ -60,6 +68,11 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 		MonitoringData data = mapper.readValue(monData.get("content"), MonitoringData.class);
 		this.kbOperations.get(data.getSystemId()).updateContext(data.getContext());
 		this.kbOperations.get(data.getSystemId()).persistMonitorData(data.getMonitors());
+
+		AnalysisContextData ctxData = new AnalysisContextData();
+		ctxData.setSystemId(data.getSystemId());
+		ctxData.setContextData(data.getContext());
+		sendContextDataToAnalyze(ctxData);
 	    } catch (IOException e) {
 		e.printStackTrace();
 	    }
@@ -75,6 +88,27 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 	    break;
 	default:
 	    break;
+	}
+    }
+
+    private void sendContextDataToAnalyze(AnalysisContextData planCtxData) {
+	ObjectMapper mapper = new ObjectMapper();
+	try {
+	    String jsonVarsMonData = mapper.writeValueAsString(planCtxData);
+	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.ANALYZE.toString(),
+		    jsonVarsMonData);
+
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send ctx data to analysis");
+	    messageContent.getMessageBody().put("contentType", "AnalysisContextData");
+
+	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
+		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
+	    IMessage mssg = new Message(this.owner.getComponentId(), this.managerPolicy.getPolicyContent().get(code),
+		    Integer.parseInt(code), MessageType.REQUEST.toString(), messageContent.getMessageBody());
+	    ((ILoopAElementComponent) this.owner.getComponentRecipient(mssg.getMessageTo()).getRecipient())
+		    .doOperation(mssg);
+	} catch (JsonProcessingException e) {
+	    e.printStackTrace();
 	}
     }
 

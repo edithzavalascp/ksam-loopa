@@ -120,4 +120,9 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 	// need systemId here
 
     }
+
+    @Override
+    public void updateContext(List<Entry<String, Object>> context) {
+	this.techAlgorithms.get(0).updateContext(context);
+    }
 }

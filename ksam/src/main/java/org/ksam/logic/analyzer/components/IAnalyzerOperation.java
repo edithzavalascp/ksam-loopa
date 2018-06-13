@@ -18,4 +18,6 @@ public interface IAnalyzerOperation {
 
     void updateAnalysisAlgorithmParameters(List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams);
+
+    void updateContext(List<Entry<String, Object>> context);
 }

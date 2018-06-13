@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.ksam.api.Application;
 import org.ksam.model.analysisData.AnalysisAlert;
+import org.ksam.model.analysisData.AnalysisContextData;
 import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.planData.PlanAlert;
 import org.loopa.comm.message.AMMessageBodyType;
@@ -60,21 +61,38 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
     @Override
     public void processLogicData(Map<String, String> analysisData) {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive alert");
-	this.analyzerCalls.increment();
-	try {
-	    ObjectMapper mapper = new ObjectMapper();
-	    AnalysisAlert data = mapper.readValue(analysisData.get("content"), AnalysisAlert.class);
-	    this.analysisOperations.get(data.getSystemId()).doAnalysisOperation(data);
-	    if (this.analysisOperations.get(data.getSystemId()).isPlanRequired()) {
-		PlanAlert pa = new PlanAlert();
-		pa.setSystemId(data.getSystemId());
-		pa.setAlertType(data.getAlertType());
-		pa.setAffectedVarsAlternativeMons(this.analysisOperations.get(data.getSystemId()).getVarsMonsToPlan());
-		sendAnalysisDataToPlan(pa);
+	switch (analysisData.get("contentType")) {
+	case "PlanAlert":
+	    this.analyzerCalls.increment();
+	    try {
+		ObjectMapper mapper = new ObjectMapper();
+		AnalysisAlert data = mapper.readValue(analysisData.get("content"), AnalysisAlert.class);
+		this.analysisOperations.get(data.getSystemId()).doAnalysisOperation(data);
+		if (this.analysisOperations.get(data.getSystemId()).isPlanRequired()) {
+		    PlanAlert pa = new PlanAlert();
+		    pa.setSystemId(data.getSystemId());
+		    pa.setAlertType(data.getAlertType());
+		    pa.setAffectedVarsAlternativeMons(
+			    this.analysisOperations.get(data.getSystemId()).getVarsMonsToPlan());
+		    sendAnalysisDataToPlan(pa);
+		}
+	    } catch (IOException e) {
+		e.printStackTrace();
 	    }
-	} catch (IOException e) {
-	    e.printStackTrace();
+	    break;
+	case "AnalysisContextData":
+	    try {
+		ObjectMapper mapper = new ObjectMapper();
+		AnalysisContextData data = mapper.readValue(analysisData.get("content"), AnalysisContextData.class);
+		this.analysisOperations.get(data.getSystemId()).updateContext(data.getContextData());
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    break;
+	default:
+	    break;
 	}
+
     }
 
     private void sendAnalysisDataToPlan(PlanAlert varsMonToPlan) {
@@ -85,6 +103,7 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
 		    jsonVarsMonData);
 
 	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send analysis data to plan");
+	    messageContent.getMessageBody().put("contentType", "PlanAlert");
 
 	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());
