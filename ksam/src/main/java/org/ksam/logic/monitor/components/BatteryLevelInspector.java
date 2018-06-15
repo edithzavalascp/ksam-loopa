@@ -21,7 +21,7 @@ public class BatteryLevelInspector {
 	this.monitorsCost = new HashMap<>();
 	String metricName = "ksam.me." + systemId + ".monitor.batterylevelsensor.variable.batterylevel";
 	batteryLevel = Metrics.gauge(metricName, new DoubleAdder());
-	batteryLevel.add(0.55); // intial battery -> move this variable to a config file
+	batteryLevel.add(1); // intial battery -> move this variable to a config file
 	monitors.forEach(monitor -> this.monitorsCost.put(monitor.getMonitorAttributes().getMonitorId(),
 		monitor.getMonitorAttributes().getCost().getValue()));
     }

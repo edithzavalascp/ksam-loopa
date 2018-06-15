@@ -69,10 +69,10 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 		this.kbOperations.get(data.getSystemId()).updateContext(data.getContext());
 		this.kbOperations.get(data.getSystemId()).persistMonitorData(data.getMonitors());
 
-		AnalysisContextData ctxData = new AnalysisContextData();
-		ctxData.setSystemId(data.getSystemId());
-		ctxData.setContextData(data.getContext());
-		sendContextDataToAnalyze(ctxData);
+		// AnalysisContextData ctxData = new AnalysisContextData();
+		// ctxData.setSystemId(data.getSystemId());
+		// ctxData.setContextData(data.getContext());
+		// sendContextDataToAnalyze(ctxData);
 	    } catch (IOException e) {
 		e.printStackTrace();
 	    }

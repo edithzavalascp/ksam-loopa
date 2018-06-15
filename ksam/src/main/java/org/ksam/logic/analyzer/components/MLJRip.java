@@ -118,7 +118,7 @@ public class MLJRip implements IAnalysisMethod {
 		    RestTemplate restTemplate = new RestTemplate();
 		    ResponseEntity<String> response = restTemplate.getForEntity(URL_WEKA + "/position/Regression/5",
 			    String.class);
-		    LOGGER.info(response.getBody());
+		    // LOGGER.info(response.getBody());
 		    // Load runtime data without predicted positions
 		    DataSource sourcePredictJ = null;
 		    Instances datasetPredictJ = null;
@@ -180,7 +180,7 @@ public class MLJRip implements IAnalysisMethod {
 		    // Predict self-driving functionality usage
 		    ResponseEntity<String> responseLaneFollower = restTemplate
 			    .getForEntity(URL_WEKA + "/" + this.config.getSystemId() + "/JRip/5", String.class);
-		    LOGGER.info(responseLaneFollower.getBody());
+		    // LOGGER.info(responseLaneFollower.getBody());
 		    // Check if self-driving is needed
 		    String[] lfUsage = responseLaneFollower.getBody().split(" ");
 		    boolean lfNeeded = false;
@@ -249,7 +249,7 @@ public class MLJRip implements IAnalysisMethod {
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<String> response = restTemplate.getForEntity(URL_WEKA + "/position/Regression/5",
 			String.class);
-		LOGGER.info(response.getBody());
+		// LOGGER.info(response.getBody());
 		// Load runtime data without predicted positions
 		DataSource sourcePredictJ = null;
 		Instances datasetPredictJ = null;
@@ -310,7 +310,7 @@ public class MLJRip implements IAnalysisMethod {
 		// Predict self-driving functionality usage
 		ResponseEntity<String> responseLaneFollower = restTemplate
 			.getForEntity(URL_WEKA + "/" + this.config.getSystemId() + "/JRip/5", String.class);
-		LOGGER.info(responseLaneFollower.getBody());
+		// LOGGER.info(responseLaneFollower.getBody());
 		// Check if self-driving is needed
 		String[] lfUsage = responseLaneFollower.getBody().split(" ");
 		boolean lfNeeded = false;
@@ -324,7 +324,8 @@ public class MLJRip implements IAnalysisMethod {
 		}
 
 		if (lfNeeded) {
-		    List<String> reqVars = this.ctxAnalyzer.getRequiredVars();
+		    List<String> reqVars = this.ctxAnalyzer.getRequiredVars("laneFollower");
+		    LOGGER.info("Required variables: " + reqVars);
 		    this.varsMons.forEach((k, v) -> {
 			if (reqVars.contains(k)) {
 			    alternativeMons.put(k, v);

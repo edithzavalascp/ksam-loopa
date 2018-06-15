@@ -1,6 +1,5 @@
 package org.ksam.logic.analyzer.components;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,17 +43,17 @@ public class OpenDlvContextAnalyzer implements IContextAnalyzer {
     }
 
     @Override
-    public List<String> getRequiredVars() {
-	List<String> reqVars = new ArrayList<>();
-	for (String k : this.contextVars.keySet()) {
-	    if (this.contextVars.get(k)) {
-		for (String var : this.servicesVars.get(k)) {
-		    if (!reqVars.contains(var)) {
-			reqVars.add(var);
-		    }
-		}
-	    }
-	}
-	return reqVars;
+    public List<String> getRequiredVars(String service) {
+	// List<String> reqVars = new ArrayList<>();
+	// for (String k : this.contextVars.keySet()) {
+	// if (this.contextVars.get(k)) {
+	// for (String var : this.servicesVars.get(k)) {
+	// if (!reqVars.contains(var)) {
+	// reqVars.add(var);
+	// }
+	// }
+	// }
+	// }
+	return this.servicesVars.get(service);
     }
 }

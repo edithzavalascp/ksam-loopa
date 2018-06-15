@@ -104,10 +104,11 @@ public class MOONSGAII implements IPlanMethod {
 	    /** SELECT BEST ALTERNATIVE MONITORS FOR THE VARIABLES REQUIRED **/
 	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
 		if (!entry.getValue().isEmpty()) {
-		    allMonitors.remove(entry.getValue());
+
 		    String minCostMonId = entry.getValue().get(0);
 		    for (String m : entry.getValue()) {
 			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
+			allMonitors.remove(m);
 		    }
 		    //////////////////////////////////////////////////////////
 		    if (!this.activeMonitors.contains(minCostMonId)) {
@@ -128,6 +129,7 @@ public class MOONSGAII implements IPlanMethod {
 		}
 	    }
 	    /** REMOVE ALL MONITORS THAT ARE NOT ASSOCIATED TO REQUIRED VARIABLES **/
+	    // LOGGER.info(allMonitors.toString());
 	    allMonitors.forEach(monNoReq -> {
 		if (this.activeMonitors.contains(monNoReq)) {
 		    monitorsToRemoveB.add(monNoReq);

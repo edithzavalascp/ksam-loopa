@@ -7,6 +7,6 @@ public interface IContextAnalyzer {
 
     void updateContext(List<Entry<String, Object>> context);
 
-    List<String> getRequiredVars();
+    List<String> getRequiredVars(String service);
 
 }

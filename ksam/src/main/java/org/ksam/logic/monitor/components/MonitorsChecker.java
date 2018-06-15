@@ -120,8 +120,8 @@ public class MonitorsChecker implements IMonitorOperation {
 			// this.isMonitorFaulty = true;
 			// }
 			/***********************************************************/
-			this.isMonitorFaulty = VariableValueChecker.isValueOutOfRange(measure.getValue(),
-				varsCh.get(measurement.getVarId()));
+			this.isMonitorFaulty = this.isMonitorFaulty || VariableValueChecker
+				.isValueOutOfRange(measure.getValue(), varsCh.get(measurement.getVarId()));
 			// measure.setValue(measure.getValue()); // this line is not required if the
 			// value passed is not normalized here.
 
@@ -139,12 +139,12 @@ public class MonitorsChecker implements IMonitorOperation {
 						.indexOf(measure.getValue())));
 		    });
 		});
-		if (isMonitorFaulty) {
+		if (this.isMonitorFaulty) {
 		    this.accumMonSymptoms.put(m.getMonitorId(), this.accumMonSymptoms.get(m.getMonitorId()) + 1);
 		    this.symptoms.increment();
 		    if (this.accumMonSymptoms.get(m.getMonitorId()) == this.minSymptoms) {
 			this.accumMonSymptoms.put(m.getMonitorId(), 0);
-			this.symptoms.increment(this.symptoms.count() * -1);
+			// this.symptoms.increment(this.symptoms.count() * -1);
 			this.faultyMonitorsIteration.add(m.getMonitorId());
 			if (!this.faultyMonitors.contains(m.getMonitorId())) {
 			    this.faultyMonitors.add(m.getMonitorId());

@@ -60,9 +60,9 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
 
     @Override
     public void processLogicData(Map<String, String> analysisData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive alert");
 	switch (analysisData.get("contentType")) {
-	case "PlanAlert":
+	case "AnalysisAlert":
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | receive alert");
 	    this.analyzerCalls.increment();
 	    try {
 		ObjectMapper mapper = new ObjectMapper();
@@ -81,6 +81,7 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
 	    }
 	    break;
 	case "AnalysisContextData":
+	    LOGGER.info(this.getComponent().getElement().getElementId() + " | receive context data");
 	    try {
 		ObjectMapper mapper = new ObjectMapper();
 		AnalysisContextData data = mapper.readValue(analysisData.get("content"), AnalysisContextData.class);
