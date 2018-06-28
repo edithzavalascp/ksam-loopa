@@ -47,7 +47,7 @@ public class MonitorsChecker implements IMonitorOperation {
 	this.monitorMetrics = new HashMap<>();
 	this.lowBatteryLevelReported = false;
 	this.config = config;
-	this.minSymptoms = 10;
+	this.minSymptoms = 3;
 	this.varsCh = new HashMap<>();
 	this.config.getSystemConfiguration().getMonitorConfig().getMonitoringVars()
 		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));

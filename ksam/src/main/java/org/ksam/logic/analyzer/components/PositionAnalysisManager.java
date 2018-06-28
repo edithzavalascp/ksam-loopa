@@ -13,7 +13,7 @@ public class PositionAnalysisManager {
     public String getLatLon(String point) {
 	String latlon = null;
 	try {
-	    for (String line : Files.lines(Paths.get("/tmp/weka/pointsRun.txt")).collect(Collectors.toList())) {
+	    for (String line : Files.lines(Paths.get("/tmp/weka/pointsLatLon.txt")).collect(Collectors.toList())) {
 		String[] data = line.split(" ");
 		if (point.equals(data[0])) {
 		    latlon = data[1];

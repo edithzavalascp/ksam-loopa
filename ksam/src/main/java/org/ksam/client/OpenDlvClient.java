@@ -43,20 +43,18 @@ public class OpenDlvClient implements IEffectorEnactor {
 	if (!replay) {
 	    try {
 		Socket socket = new Socket(HOST_NAME, PORT);
-
 		DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 		byte[] data = dataString.getBytes();
 		dos.write(data);
-		LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
-			+ dataString);
-
 		dos.close();
 		socket.close();
 	    } catch (IOException e) {
+		LOGGER.error(e.toString());
 	    }
 	} else {
-	    LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
-		    + dataString);
+	    // LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" +
+	    // vehicleId + " adaptation: "
+	    // + dataString);
 	    ObjectMapper mapper = new ObjectMapper();
 	    String jsonAdaptation;
 	    try {
@@ -71,5 +69,8 @@ public class OpenDlvClient implements IEffectorEnactor {
 		e.printStackTrace();
 	    }
 	}
+	LOGGER.info("OpenDlv enactor | send adaptation to be applied by vehicle" + vehicleId + " adaptation: "
+		+ dataString);
+
     }
 }

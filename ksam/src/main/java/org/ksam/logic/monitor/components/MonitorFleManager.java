@@ -63,7 +63,8 @@ public class MonitorFleManager implements IMonitorFleManager {
 
     @Override
     public void processLogicData(Map<String, String> monData) {
-	LOGGER.info(this.getComponent().getElement().getElementId() + " | receive monitoring data");
+	// LOGGER.info(this.getComponent().getElement().getElementId() + " | receive
+	// monitoring data");
 	this.monitorCalls.increment();
 	MonitoringData nomalizedData = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
 	sendMonDataToKB(nomalizedData);
@@ -122,7 +123,8 @@ public class MonitorFleManager implements IMonitorFleManager {
 		    jsonNomalizedData);
 	    messageContent.getMessageBody().put("contentType", "MonitoringData");
 
-	    LOGGER.info(this.getComponent().getElement().getElementId() + " | send monitoring to persist to kb");
+	    // LOGGER.info(this.getComponent().getElement().getElementId() + " | send
+	    // monitoring to persist to kb");
 
 	    String code = this.getComponent().getElement().getElementPolicy().getPolicyContent()
 		    .get(LoopAElementMessageCode.MSSGOUTFL.toString());

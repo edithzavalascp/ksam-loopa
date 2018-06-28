@@ -62,7 +62,8 @@ public class KnowledgeBaseFleManager implements IKnowledgeBaseFleManager {
 	this.kbCalls.increment();
 	switch (monData.get("contentType")) {
 	case "MonitoringData":
-	    LOGGER.info(this.getComponent().getElement().getElementId() + " | persist monitoring data");
+	    // LOGGER.info(this.getComponent().getElement().getElementId() + " | persist
+	    // monitoring data");
 	    try {
 		ObjectMapper mapper = new ObjectMapper();
 		MonitoringData data = mapper.readValue(monData.get("content"), MonitoringData.class);
