@@ -85,11 +85,10 @@ public class MonitorsChecker implements IMonitorOperation {
     @Override
     public MonitoringData doMonitorOperation(Map<String, String> monData) {
 	MonitoringData normalizedData = new MonitoringData();
-
+	// LOGGER.info(monData.toString());
 	try {
 	    ObjectMapper mapper = new ObjectMapper();
 	    MonitoringData data = mapper.readValue(monData.get("monData").toString(), MonitoringData.class);
-
 	    data.getMonitors().forEach(m -> {
 		if (m.getMonitorId().equals("V2VDenm_Event")) {
 		    this.isCrash = true; // report crash everytime an event is received

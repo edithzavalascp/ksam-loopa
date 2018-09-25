@@ -5,8 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class OpenDlvContextPersister implements IContextPersister {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class OpenDlvContextPersister implements IContextPersister {
+    protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
     private List<String> contextVars;
 
     public OpenDlvContextPersister(List<String> contextVars) {
@@ -15,6 +18,7 @@ public class OpenDlvContextPersister implements IContextPersister {
 
     @Override
     public Map<String, Integer> updateContext(List<Entry<String, Object>> context) {
+	// LOGGER.info("Receive context: " + context.toString());
 	Map<String, Integer> ctxVarsVals = new HashMap<>();
 	if (context != null) {
 	    context.forEach(ctx -> {

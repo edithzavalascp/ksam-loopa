@@ -27,8 +27,8 @@ public class BatteryLevelInspector {
     }
 
     public void reduceBattery(String monitorId) {
-	double reduce = (this.monitorsCost.get(monitorId) / 100000) * -1;
-	batteryLevel.add(reduce);
+	// double reduce = (this.monitorsCost.get(monitorId) / 100000) * -1;
+	// batteryLevel.add(reduce);
 	// LOGGER.info("Curent battery: " + batteryLevel.doubleValue());
     }
 

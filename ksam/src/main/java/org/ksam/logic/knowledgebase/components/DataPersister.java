@@ -28,6 +28,7 @@ public class DataPersister implements IKbOperation {
     // private boolean simSelfDriving;
     private double lat;
     private double lon;
+    private final boolean isReplay = false;
 
     public DataPersister(MeConfig config) {
 	super();
@@ -66,8 +67,10 @@ public class DataPersister implements IKbOperation {
 
     @Override
     public void updateContext(List<Entry<String, Object>> context) {
-	if ((lat < 12 && lon < 0.1) || (lat < 53 && lon < -43)) {
-	    context.forEach(entry -> entry.setValue(new ArrayList<>()));
+	if (isReplay) {
+	    if ((lat < 12 && lon < 0.1) || (lat < 53 && lon < -43)) {
+		context.forEach(entry -> entry.setValue(new ArrayList<>()));
+	    }
 	}
 	Map<String, Integer> newVals = this.wekaM.setContextData(context);
 	newVals.forEach((k, v) -> this.contextMetrics.get(k).set(v));
