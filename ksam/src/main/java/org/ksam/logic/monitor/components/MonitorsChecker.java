@@ -36,6 +36,7 @@ public class MonitorsChecker implements IMonitorOperation {
     private boolean isMonitorFaulty;
     private boolean isAnalysisRequired;
     private boolean isBatteryLevelLow;
+    private boolean isCrash;
     private Map<String, Map<String, DoubleAdder>> monitorMetrics;
     private Counter symptoms;
 
@@ -64,6 +65,7 @@ public class MonitorsChecker implements IMonitorOperation {
 	    this.accumMonSymptoms.put(monitor, 0);
 	});
 	this.isBatteryLevelLow = false;
+	this.isCrash = false;
 
 	// create metrics for monitoring variables
 	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
@@ -89,6 +91,9 @@ public class MonitorsChecker implements IMonitorOperation {
 	    MonitoringData data = mapper.readValue(monData.get("monData").toString(), MonitoringData.class);
 
 	    data.getMonitors().forEach(m -> {
+		if (m.getMonitorId().equals("V2VDenm_Event")) {
+		    this.isCrash = true; // report crash everytime an event is received
+		}
 		this.batteryLevelI.reduceBattery(m.getMonitorId());
 		this.isMonitorFaulty = false;
 		m.getMeasurements().forEach(measurement -> {
@@ -175,11 +180,12 @@ public class MonitorsChecker implements IMonitorOperation {
     @Override
     public boolean isAnalysisRequired() {
 	this.isAnalysisRequired = this.faultyMonitorsIteration.isEmpty() && this.recoveredMonitors.isEmpty()
-		&& !this.isBatteryLevelLow ? false : true;
+		&& !this.isBatteryLevelLow && !this.isCrash ? false : true;
 	if (this.isBatteryLevelLow) {
 	    this.symptoms.increment();
 	    this.lowBatteryLevelReported = true;
 	}
+
 	return this.isAnalysisRequired;
     }
 
@@ -212,4 +218,12 @@ public class MonitorsChecker implements IMonitorOperation {
     public boolean lowBatteryLevel() {
 	return this.isBatteryLevelLow ? true : false;
     }
+
+    @Override
+    public boolean isCrash() {
+	boolean iCrash = this.isCrash ? true : false;
+	this.isCrash = false;
+	return iCrash;
+    }
+
 }

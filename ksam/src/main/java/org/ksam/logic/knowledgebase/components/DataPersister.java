@@ -1,5 +1,6 @@
 package org.ksam.logic.knowledgebase.components;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,9 @@ public class DataPersister implements IKbOperation {
     private final Map<String, VariableValueCharacteristics> varsCh;
 
     private WekaPersistenceManager wekaM;
+    // private boolean simSelfDriving;
+    private double lat;
+    private double lon;
 
     public DataPersister(MeConfig config) {
 	super();
@@ -55,10 +59,16 @@ public class DataPersister implements IKbOperation {
 		    this.contextMetrics.put(state, Metrics.gauge(contextMetricName, new AtomicInteger()));
 		    this.contextMetrics.get(state).set(0);
 		});
+	// this.simSelfDriving = false;
+	this.lat = 0.0;
+	this.lon = 0.0;
     }
 
     @Override
     public void updateContext(List<Entry<String, Object>> context) {
+	if ((lat < 12 && lon < 0.1) || (lat < 53 && lon < -43)) {
+	    context.forEach(entry -> entry.setValue(new ArrayList<>()));
+	}
 	Map<String, Integer> newVals = this.wekaM.setContextData(context);
 	newVals.forEach((k, v) -> this.contextMetrics.get(k).set(v));
     }
@@ -74,8 +84,14 @@ public class DataPersister implements IKbOperation {
 		Double value = Double.valueOf(normalizedValue);
 		// Double value = Double.valueOf(measurement.getMeasures().get(0).getValue());
 		monVarValue.put(m.getMonitorId() + "-" + measurement.getVarId(), value);
+		if (m.getMonitorId().equals("imuodsimcvehicle")) {
+		    if (measurement.getVarId().equals("longitude")) {
+			this.lon = Double.valueOf(measurement.getMeasures().get(0).getValue());
+		    } else if (measurement.getVarId().equals("latitude")) {
+			this.lat = Double.valueOf(measurement.getMeasures().get(0).getValue());
+		    }
+		}
 	    });
-
 	});
 	this.wekaM.setMonitoringData(monVarValue);
     }

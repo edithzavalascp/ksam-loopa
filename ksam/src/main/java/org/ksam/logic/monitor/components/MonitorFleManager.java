@@ -70,6 +70,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	sendMonDataToKB(nomalizedData);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {
 	    LOGGER.info("Analysis is required");
+	    LOGGER.info("Symptomatic monitoring data: " + monData);
 	    List<String> fm = this.monOperations.get(monData.get("systemId")).getFaultyMonitors();
 	    if (!fm.isEmpty()) {
 		AnalysisAlert aa = new AnalysisAlert();
@@ -90,6 +91,12 @@ public class MonitorFleManager implements IMonitorFleManager {
 		AnalysisAlert aa = new AnalysisAlert();
 		aa.setSystemId(monData.get("systemId"));
 		aa.setAlertType(AlertType.LOWBATTERYLEVEL);
+		sendSymptomToAnalysis(aa);
+	    }
+	    if (this.monOperations.get(monData.get("systemId")).isCrash()) {
+		AnalysisAlert aa = new AnalysisAlert();
+		aa.setSystemId(monData.get("systemId"));
+		aa.setAlertType(AlertType.ROADEVENT);
 		sendSymptomToAnalysis(aa);
 	    }
 	}

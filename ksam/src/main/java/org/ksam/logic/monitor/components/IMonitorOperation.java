@@ -17,6 +17,8 @@ public interface IMonitorOperation {
 
     boolean lowBatteryLevel();
 
+    boolean isCrash();
+
     void updateMinSymptoms(int newMinSympt);
 
 }

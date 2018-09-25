@@ -27,7 +27,6 @@ import weka.core.converters.ConverterUtils.DataSource;
 
 public class MLJRip implements IAnalysisMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private final int WINDOW = 250;
     private List<Entry<String, String>> algorithmParams;
     private List<Entry<String, String>> evalParams;
     private SumConfig config;
@@ -43,6 +42,7 @@ public class MLJRip implements IAnalysisMethod {
     // this variables should be set in a config file
     private final String URL_WEKA = "http://localhost:8085/";
     private final boolean simulation = false;
+    private final int WINDOW = 500;
 
     public MLJRip(SumConfig config, List<Entry<String, String>> algorithmParams,
 	    List<Entry<String, String>> evalParams) {
@@ -116,8 +116,10 @@ public class MLJRip implements IAnalysisMethod {
 		}
 		// Predict next vehicle position
 		RestTemplate restTemplate = new RestTemplate();
+		LOGGER.info("Analysis | send data to predict position");
 		ResponseEntity<String> response = restTemplate.getForEntity(URL_WEKA + "/position/Ibk/" + WINDOW,
 			String.class);
+		LOGGER.info("Analysis | receive position prediction");
 		// LOGGER.info(response.getBody());
 		// Load runtime data without predicted positions
 		DataSource sourcePredictJ = null;
@@ -176,17 +178,21 @@ public class MLJRip implements IAnalysisMethod {
 		    e.printStackTrace();
 		}
 		// Predict self-driving functionality usage
+		LOGGER.info("Analysis | send data to predict self-driving functionality usage");
 		ResponseEntity<String> responseLaneFollower = restTemplate
 			.getForEntity(URL_WEKA + "/" + this.config.getSystemId() + "/JRip/" + WINDOW, String.class);
+		LOGGER.info("Analysis | receive self-driving functionality usage prediction");
+		LOGGER.info("Analysis | Prediction " + responseLaneFollower.getBody().toString());
 		// LOGGER.info(responseLaneFollower.getBody());
 		// Check if self-driving is needed
 		String[] lfUsage = responseLaneFollower.getBody().split(" ");
-		boolean lfNeeded = false;
+		boolean lfNeeded = true;
 		for (String pUsage : lfUsage) {
 		    if (pUsage.equals("1")) {
-			lfNeeded = true;
+			lfNeeded &= true;
 			this.adaptationNeeded.set(1);
 		    } else {
+			lfNeeded = false;
 			this.adaptationNeeded.set(0);
 		    }
 		}
@@ -201,7 +207,7 @@ public class MLJRip implements IAnalysisMethod {
 		    // Copy last available runtimedata
 		    try {
 			List<String> linesPost = Files
-				.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + ".arff"))
+				.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + "_real.arff"))
 				.collect(Collectors.toList());
 			LOGGER.info(
 				"Current data: " + linesPost.get(linesPost.size() - 1) + ", last predicted position: "
@@ -222,7 +228,7 @@ public class MLJRip implements IAnalysisMethod {
 			    Paths.get("/tmp/weka/" + this.config.getSystemId() + "_jrip_predict_temp.arff"),
 			    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 		    // Copy last available runtime data
-		    List<String> lines = Files.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + ".arff"))
+		    List<String> lines = Files.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + "_real.arff"))
 			    .collect(Collectors.toList());
 		    String toPred = "";
 		    for (int w = 0; w < WINDOW; w++) {
@@ -313,12 +319,13 @@ public class MLJRip implements IAnalysisMethod {
 		// LOGGER.info(responseLaneFollower.getBody());
 		// Check if self-driving is needed
 		String[] lfUsage = responseLaneFollower.getBody().split(" ");
-		boolean lfNeeded = false;
+		boolean lfNeeded = true;
 		for (String pUsage : lfUsage) {
 		    if (pUsage.equals("1")) {
-			lfNeeded = true;
+			lfNeeded &= true;
 			this.adaptationNeeded.set(1);
 		    } else {
+			lfNeeded = false;
 			this.adaptationNeeded.set(0);
 		    }
 		}
@@ -335,7 +342,7 @@ public class MLJRip implements IAnalysisMethod {
 		    // Copy last available runtimedata
 		    try {
 			List<String> linesPost = Files
-				.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + ".arff"))
+				.lines(Paths.get("/tmp/weka/" + this.config.getSystemId() + "_real.arff"))
 				.collect(Collectors.toList());
 			LOGGER.info(
 				"Current data: " + linesPost.get(linesPost.size() - 1) + ", last predicted position: "
@@ -356,6 +363,7 @@ public class MLJRip implements IAnalysisMethod {
 	    }
 	    break;
 	case ROADEVENT:
+	    alternativeMons.put("trafficFactor", null);
 	    break;
 	default:
 	    break;

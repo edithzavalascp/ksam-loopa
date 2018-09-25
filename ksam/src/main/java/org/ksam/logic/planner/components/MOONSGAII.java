@@ -18,6 +18,9 @@ import io.micrometer.core.instrument.Metrics;
 
 public class MOONSGAII implements IPlanMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
+
+    private final boolean lonelyRoad = true; // TRY WITH THIS TO FALSE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     private List<Entry<String, String>> algorithmParams;
     private List<Entry<String, String>> evalParams;
     private SumConfig config;
@@ -39,7 +42,7 @@ public class MOONSGAII implements IPlanMethod {
 	this.monitorMetrics = new HashMap<>();
 	this.requiredVars = new ArrayList<>();
 	this.activeMonitors = this.config.getSystemConfiguration().getMonitorConfig().getInitialActiveMonitors();
-	// TODO Check different types of costs, how to managed that?
+	// TODO Check different types of costs, how to manage that?
 	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
 	    this.monsCost.put(m.getMonitorAttributes().getMonitorId(), m.getMonitorAttributes().getCost().getValue());
 	    String metricName = "ksam.me." + this.config.getSystemId() + ".monitor."
@@ -73,14 +76,24 @@ public class MOONSGAII implements IPlanMethod {
 	    // Substitute this simplified algorithm for the genetic one
 	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
 		if (!entry.getValue().isEmpty()) {
-		    String minCostMonId = entry.getValue().get(0);
-		    for (String m : entry.getValue()) {
-			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
-		    }
-		    if (!this.activeMonitors.contains(minCostMonId)) {
-			monitorsToAdd.add(minCostMonId);
-			this.activeMonitors.add(minCostMonId);
-			this.monitorMetrics.get(minCostMonId).set(1);
+		    if (lonelyRoad) {
+			String minCostMonId = entry.getValue().get(0);
+			for (String m : entry.getValue()) {
+			    minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
+			}
+			if (!this.activeMonitors.contains(minCostMonId)) {
+			    monitorsToAdd.add(minCostMonId);
+			    this.activeMonitors.add(minCostMonId);
+			    this.monitorMetrics.get(minCostMonId).set(1);
+			}
+		    } else {
+			for (String m : entry.getValue()) {
+			    if (!this.activeMonitors.contains(m)) {
+				monitorsToAdd.add(m);
+				this.activeMonitors.add(m);
+				this.monitorMetrics.get(m).set(1);
+			    }
+			}
 		    }
 		}
 	    }
@@ -168,6 +181,15 @@ public class MOONSGAII implements IPlanMethod {
 	    adaptR.setMonitorsToAdd(new ArrayList<>());
 	    adaptR.setMonitorsToRemove(monitorsToRemove);
 	    adaptations.add(adaptR);
+	    break;
+	case ROADEVENT:
+	    MonitorAdaptation adaptROAD = new MonitorAdaptation();
+	    List<String> monitorsToAddROAD = new ArrayList<>();
+	    monitorsToAddROAD.add("heretraffic-trafficFactor_PATH2");
+	    adaptROAD.setAdaptId("ROADEVENT");
+	    adaptROAD.setMonitorsToAdd(monitorsToAddROAD);
+	    adaptROAD.setMonitorsToRemove(new ArrayList<>());
+	    adaptations.add(adaptROAD);
 	    break;
 	default:
 	    break;

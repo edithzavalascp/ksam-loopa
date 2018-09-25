@@ -24,14 +24,14 @@ public class PositionPersistenceManager {
 
     // This kind of variables should go into a config file
     private final String URL_WEKA = "http://localhost:8085/";
-    private final boolean learning = false;
-    private final boolean simulation = false;
+    private final boolean isLearning = true;
+    private final boolean isSimulation = false;
     private final int WINDOW = 5;
 
     public PositionPersistenceManager() {
 	this.points = new HashMap<>(); // use only for training
 	try {
-	    if (learning) {
+	    if (isLearning) {
 		Files.copy(Paths.get("/tmp/weka/points_header.arff"), Paths.get("/tmp/weka/points_real.arff"),
 			java.nio.file.StandardCopyOption.REPLACE_EXISTING); // use only for training
 		Files.copy(Paths.get("/tmp/weka/position_header.arff"), Paths.get("/tmp/weka/position_real.arff"),
@@ -60,7 +60,7 @@ public class PositionPersistenceManager {
 	String lat = "?";
 	String lon = "?";
 	/** Simulation **/
-	if (simulation) {
+	if (isSimulation) {
 	    lat = latitudeLongitude.get("imuodsimcvehicle-latitude");
 	    lon = latitudeLongitude.get("imuodsimcvehicle-longitude");
 	} else {
@@ -71,9 +71,9 @@ public class PositionPersistenceManager {
 
 	if (!lat.equals("?") && !lon.equals("?")) {
 	    /************************************
-	     * Learning - first phase
+	     * Learning - first phase *
 	     ************************************/
-	    if (learning) {
+	    if (isLearning) {
 		Integer value = this.points.put(lat + "," + lon, this.pointNumber);
 		// Compute last points
 		if (this.lastXPoints.isEmpty()) {
@@ -124,8 +124,8 @@ public class PositionPersistenceManager {
 		}
 		/**************************************************************************************************************/
 	    } else {
-		/**************************
-		 * Normal runtime operation
+		/****************************
+		 * Normal runtime operation *
 		 ***************************/
 		// Write current latitude and longitude
 		try {

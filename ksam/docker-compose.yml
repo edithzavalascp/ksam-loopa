@@ -4,8 +4,8 @@ services:
     ksam-loopa:
         image: ksam:latest
         ports:
-            - "8080:8080"
+            - "8090:8080"
         volumes:
-        - /weka_ksam/:/tmp/weka
+        - /home/revere/ezb/ksam_data/:/tmp/weka
         network_mode: host
-        command: "/application.json"
+        command: "/application.json --server.port=8090"

@@ -84,6 +84,10 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 			.putAll(this.techAlgorithms.get(0).doAnalysis(recoveredm, analysisAlert.getAlertType()));
 	    });
 	    break;
+	case ROADEVENT:
+	    LOGGER.info("AlertsAnalyzer | Path changes due to a ROADEVENT (CRASH)");
+	    this.varsMonsToPlan = this.techAlgorithms.get(0).doAnalysis(null, analysisAlert.getAlertType());
+	    break;
 	default:
 	    break;
 	}

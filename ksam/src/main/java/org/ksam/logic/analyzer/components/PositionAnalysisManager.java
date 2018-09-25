@@ -6,22 +6,25 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 public class PositionAnalysisManager {
+    private final boolean isLearning = true;
 
     public PositionAnalysisManager() {
     }
 
     public String getLatLon(String point) {
 	String latlon = null;
-	try {
-	    for (String line : Files.lines(Paths.get("/tmp/weka/pointsLatLon.txt")).collect(Collectors.toList())) {
-		String[] data = line.split(" ");
-		if (point.equals(data[0])) {
-		    latlon = data[1];
-		    break;
+	if (!isLearning) {
+	    try {
+		for (String line : Files.lines(Paths.get("/tmp/weka/pointsLatLon.txt")).collect(Collectors.toList())) {
+		    String[] data = line.split(" ");
+		    if (point.equals(data[0])) {
+			latlon = data[1];
+			break;
+		    }
 		}
+	    } catch (IOException e) {
+		e.printStackTrace();
 	    }
-	} catch (IOException e) {
-	    e.printStackTrace();
 	}
 	return latlon;
     }

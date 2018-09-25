@@ -43,7 +43,7 @@ public class WekaPersistenceManager {
 	this.meId = meId;
 	// this.mvrT = new MonVarsRangesTranslator(monVars);
 	this.persistenceMonitors = persistenceMonitors;
-	this.filePath = "/tmp/weka/" + this.meId + ".arff";
+	this.filePath = "/tmp/weka/" + this.meId + "_real.arff";
 	this.pMonsVarsRuntimeData = new HashMap<>();
 	this.monitors = monitors;
 	this.contextVarsValues = new HashMap<>();
