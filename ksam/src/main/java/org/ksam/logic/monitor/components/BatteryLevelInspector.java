@@ -13,27 +13,34 @@ import io.micrometer.core.instrument.Metrics;
 
 public class BatteryLevelInspector {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private DoubleAdder batteryLevel;
+    private final boolean reduceBattery;
+    private final double batteryLimit;
 
     private Map<String, Double> monitorsCost;
+    private DoubleAdder batteryLevel;
 
-    public BatteryLevelInspector(List<Monitor> monitors, String systemId) {
+    public BatteryLevelInspector(List<Monitor> monitors, String systemId, int initBatteryLevele, boolean reduceBattery,
+	    double batteryLimit) {
 	this.monitorsCost = new HashMap<>();
 	String metricName = "ksam.me." + systemId + ".monitor.batterylevelsensor.variable.batterylevel";
 	batteryLevel = Metrics.gauge(metricName, new DoubleAdder());
-	batteryLevel.add(1); // intial battery -> move this variable to a config file
+	batteryLevel.add(initBatteryLevele);
 	monitors.forEach(monitor -> this.monitorsCost.put(monitor.getMonitorAttributes().getMonitorId(),
 		monitor.getMonitorAttributes().getCost().getValue()));
+	this.reduceBattery = reduceBattery;
+	this.batteryLimit = batteryLimit;
     }
 
     public void reduceBattery(String monitorId) {
-	// double reduce = (this.monitorsCost.get(monitorId) / 100000) * -1;
-	// batteryLevel.add(reduce);
-	// LOGGER.info("Curent battery: " + batteryLevel.doubleValue());
+	if (this.reduceBattery) {
+	    double reduce = (this.monitorsCost.get(monitorId) / 100000) * -1;
+	    batteryLevel.add(reduce);
+	    LOGGER.info("Curent battery: " + batteryLevel.doubleValue());
+	}
     }
 
     public boolean isBatteryLevelLow() {
-	return batteryLevel.doubleValue() < 0.50 ? true : false;
+	return batteryLevel.doubleValue() < this.batteryLimit ? true : false;
     }
 
 }

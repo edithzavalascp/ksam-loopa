@@ -8,9 +8,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.DoubleAdder;
 
-import org.ksam.model.configuration.SumConfig;
+import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
 import org.ksam.model.configuration.supportedvalues.VariableValueType;
 import org.ksam.model.monitoringData.MonitoringData;
@@ -24,7 +25,7 @@ import io.micrometer.core.instrument.Metrics;
 
 public class MonitorsChecker implements IMonitorOperation {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-    private final SumConfig config;
+    private final MeConfig config;
     private final Map<String, VariableValueCharacteristics> varsCh;
     private int minSymptoms;
     private Map<String, Integer> accumMonSymptoms;
@@ -42,43 +43,50 @@ public class MonitorsChecker implements IMonitorOperation {
 
     private BatteryLevelInspector batteryLevelI;
     private boolean lowBatteryLevelReported;
+    private boolean isLaneFollowerActive;
 
-    public MonitorsChecker(SumConfig config) {
+    public MonitorsChecker(MeConfig config) {
 	super();
 	this.monitorMetrics = new HashMap<>();
 	this.lowBatteryLevelReported = false;
 	this.config = config;
-	this.minSymptoms = 3;
+	this.minSymptoms = this.config.getKsamConfig().getMonitorConfig().getMinSymptoms();
 	this.varsCh = new HashMap<>();
-	this.config.getSystemConfiguration().getMonitorConfig().getMonitoringVars()
+	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitoringVars()
 		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));
 	this.accumMonSymptoms = new HashMap<>();
 	this.faultyMonitors = new ArrayList<>();
 	this.faultyMonitorsIteration = new ArrayList<>();
 	this.recoveredMonitors = new ArrayList<>();
 	this.batteryLevelI = new BatteryLevelInspector(
-		this.config.getSystemConfiguration().getMonitorConfig().getMonitors(), this.config.getSystemId());
+		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors(),
+		this.config.getSystemUnderMonitoringConfig().getSystemId(),
+		this.config.getKsamConfig().getMonitorConfig().getInitBatteryLevele(),
+		this.config.getKsamConfig().getMonitorConfig().isReduceBattery(),
+		this.config.getKsamConfig().getMonitorConfig().getBatteryLimit());
 	// this.faultyMonitor = new HashMap<>();
 	// this.accumMonAlert = new HashMap<>();
-	this.config.getSystemVariables().getMonitorVars().getMonitors().forEach(monitor -> {
-	    // this.accumMonAlert.put(monitor, 0);
-	    this.accumMonSymptoms.put(monitor, 0);
-	});
+	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getMonitorVars().getMonitors()
+		.forEach(monitor -> {
+		    // this.accumMonAlert.put(monitor, 0);
+		    this.accumMonSymptoms.put(monitor, 0);
+		});
 	this.isBatteryLevelLow = false;
 	this.isCrash = false;
-
+	this.isLaneFollowerActive = false;
 	// create metrics for monitoring variables
-	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
-	    Map<String, DoubleAdder> metrics = new HashMap<>();
-	    for (String var : m.getMonitorAttributes().getMonitoringVars()) {
-		String metricName = "ksam.me." + this.config.getSystemId() + ".monitor."
-			+ m.getMonitorAttributes().getMonitorId() + ".variable." + var;
-		metrics.put(var, Metrics.gauge(metricName, new DoubleAdder()));
+	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors()
+		.forEach(m -> {
+		    Map<String, DoubleAdder> metrics = new HashMap<>();
+		    for (String var : m.getMonitorAttributes().getMonitoringVars()) {
+			String metricName = "ksam.me." + this.config.getSystemUnderMonitoringConfig().getSystemId()
+				+ ".monitor." + m.getMonitorAttributes().getMonitorId() + ".variable." + var;
+			metrics.put(var, Metrics.gauge(metricName, new DoubleAdder()));
 
-	    }
-	    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
+		    }
+		    this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(), metrics);
 
-	});
+		});
 	this.symptoms = Metrics.counter("ksam.monitor.symptoms");
     }
 
@@ -93,6 +101,23 @@ public class MonitorsChecker implements IMonitorOperation {
 		if (m.getMonitorId().equals("V2VDenm_Event")) {
 		    this.isCrash = true; // report crash everytime an event is received
 		}
+
+		List<Entry<String, Object>> context = data.getContext();
+		if (context != null) {
+		    context.forEach(ctx -> {
+			if (ctx.getKey().equals("services")) {
+			    List<String> x = (List<String>) ctx.getValue();
+			    if (m.getMonitorId().equals("heretraffic") || m.getMonitorId().equals("openweathermap")) {
+				if (this.isLaneFollowerActive) {
+				    x.add("laneFollower");
+				}
+			    } else {
+				this.isLaneFollowerActive = x.isEmpty() ? false : true;
+			    }
+			}
+		    });
+		}
+
 		this.batteryLevelI.reduceBattery(m.getMonitorId());
 		this.isMonitorFaulty = false;
 		m.getMeasurements().forEach(measurement -> {
@@ -169,7 +194,9 @@ public class MonitorsChecker implements IMonitorOperation {
 		}
 	    });
 	    normalizedData = data;
-	} catch (IOException e) {
+	} catch (
+
+	IOException e) {
 	    e.printStackTrace();
 	}
 	this.isBatteryLevelLow = !this.lowBatteryLevelReported ? this.batteryLevelI.isBatteryLevelLow() : false;

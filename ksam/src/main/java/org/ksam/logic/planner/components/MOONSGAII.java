@@ -7,9 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.ksam.logic.analyzer.components.IContextAnalyzer;
 import org.ksam.model.adaptation.MonitorAdaptation;
-import org.ksam.model.configuration.SumConfig;
+import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.planData.PlanAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,42 +18,46 @@ import io.micrometer.core.instrument.Metrics;
 public class MOONSGAII implements IPlanMethod {
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
-    private final boolean lonelyRoad = true; // TRY WITH THIS TO FALSE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    private final boolean lonelyRoad;
     private List<Entry<String, String>> algorithmParams;
     private List<Entry<String, String>> evalParams;
-    private SumConfig config;
+    private MeConfig config;
     private Map<String, Double> monsCost;
 
     private List<String> activeMonitors;
     private Map<String, AtomicInteger> monitorMetrics;
-    private List<String> requiredVars;
+    // private List<String> requiredVars;
 
-    private IContextAnalyzer ctxPlanner;
+    // private IContextAnalyzer ctxPlanner;
 
-    public MOONSGAII(SumConfig config, List<Entry<String, String>> algorithmParams,
-	    List<Entry<String, String>> evalParams) {
+    public MOONSGAII(MeConfig config) {
 	super();
 	this.config = config;
-	this.algorithmParams = algorithmParams;
-	this.evalParams = evalParams;
+	this.lonelyRoad = this.config.getKsamConfig().getPlannerConfig().isLonelyRoad();
+	this.algorithmParams = this.config.getKsamConfig().getPlannerConfig().getPlanTechniques().get(0).getAlgorithms()
+		.get(0).getAlgorithmParameters();
+	this.evalParams = this.config.getKsamConfig().getPlannerConfig().getPlanTechniques().get(0).getAlgorithms()
+		.get(0).getEvaluationParameters();
 	this.monsCost = new HashMap<>();
 	this.monitorMetrics = new HashMap<>();
-	this.requiredVars = new ArrayList<>();
-	this.activeMonitors = this.config.getSystemConfiguration().getMonitorConfig().getInitialActiveMonitors();
+	// this.requiredVars = new ArrayList<>();
+	this.activeMonitors = this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
+		.getInitialActiveMonitors();
 	// TODO Check different types of costs, how to manage that?
-	this.config.getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
-	    this.monsCost.put(m.getMonitorAttributes().getMonitorId(), m.getMonitorAttributes().getCost().getValue());
-	    String metricName = "ksam.me." + this.config.getSystemId() + ".monitor."
-		    + m.getMonitorAttributes().getMonitorId() + ".state";
-	    if (this.activeMonitors.contains(m.getMonitorAttributes().getMonitorId())) {
-		this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
-			Metrics.gauge(metricName, new AtomicInteger(1)));
-	    } else {
-		this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
-			Metrics.gauge(metricName, new AtomicInteger(0)));
-	    }
-	});
+	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors()
+		.forEach(m -> {
+		    this.monsCost.put(m.getMonitorAttributes().getMonitorId(),
+			    m.getMonitorAttributes().getCost().getValue());
+		    String metricName = "ksam.me." + this.config.getSystemUnderMonitoringConfig().getSystemId()
+			    + ".monitor." + m.getMonitorAttributes().getMonitorId() + ".state";
+		    if (this.activeMonitors.contains(m.getMonitorAttributes().getMonitorId())) {
+			this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
+				Metrics.gauge(metricName, new AtomicInteger(1)));
+		    } else {
+			this.monitorMetrics.put(m.getMonitorAttributes().getMonitorId(),
+				Metrics.gauge(metricName, new AtomicInteger(0)));
+		    }
+		});
     }
 
     @Override
@@ -112,7 +115,8 @@ public class MOONSGAII implements IPlanMethod {
 	    // Substitute this simplified algorithm for the genetic one - take into account
 	    // context in Analysis
 
-	    List<String> allMonitors = this.config.getSystemVariables().getMonitorVars().getMonitors();
+	    List<String> allMonitors = this.config.getSystemUnderMonitoringConfig().getSystemVariables()
+		    .getMonitorVars().getMonitors();
 
 	    /** SELECT BEST ALTERNATIVE MONITORS FOR THE VARIABLES REQUIRED **/
 	    for (Map.Entry<String, List<String>> entry : planAlert.getAffectedVarsAlternativeMons().entrySet()) {
@@ -184,11 +188,13 @@ public class MOONSGAII implements IPlanMethod {
 	    break;
 	case ROADEVENT:
 	    MonitorAdaptation adaptROAD = new MonitorAdaptation();
-	    List<String> monitorsToAddROAD = new ArrayList<>();
-	    monitorsToAddROAD.add("heretraffic-trafficFactor_PATH2");
 	    adaptROAD.setAdaptId("ROADEVENT");
-	    adaptROAD.setMonitorsToAdd(monitorsToAddROAD);
+	    adaptROAD.setMonitorsToAdd(new ArrayList<>());
 	    adaptROAD.setMonitorsToRemove(new ArrayList<>());
+	    // Decide how to adapt
+	    Map<String, String> paramsToAdapt = new HashMap<>();
+	    paramsToAdapt.put("traffic-frequency", "1000"); // E.g., reduce traffic factor monitoring frequency
+	    adaptROAD.setParamsToAdapt(paramsToAdapt);
 	    adaptations.add(adaptROAD);
 	    break;
 	default:

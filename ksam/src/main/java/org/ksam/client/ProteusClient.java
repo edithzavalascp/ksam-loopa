@@ -3,6 +3,7 @@ package org.ksam.client;
 import java.util.HashMap;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
+import org.ksam.model.configuration.MeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -33,6 +34,12 @@ public class ProteusClient implements IEffectorEnactor {
     @Override
     public void enact(MonitorAdaptation a) {
 	LOGGER.info("También me llega");
+
+    }
+
+    @Override
+    public void setConfig(MeConfig config) {
+	// TODO Auto-generated method stub
 
     }
 }

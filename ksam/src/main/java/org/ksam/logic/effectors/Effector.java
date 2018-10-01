@@ -3,6 +3,7 @@ package org.ksam.logic.effectors;
 import java.io.IOException;
 
 import org.ksam.client.IEffectorEnactor;
+import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.executeData.ExecuteAlert;
 import org.loopa.comm.message.IMessage;
 import org.loopa.executer.effector.IEffector;
@@ -16,9 +17,10 @@ public class Effector implements IEffector {
 
     private final IEffectorEnactor meEnactor;
 
-    public Effector(IEffectorEnactor meEnactor) {
+    public Effector(MeConfig config, IEffectorEnactor meEnactor) {
 	super();
 	this.meEnactor = meEnactor;
+	this.meEnactor.setConfig(config);
     }
 
     @Override

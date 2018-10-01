@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
+import org.ksam.model.configuration.MeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -16,16 +17,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class OpenDlvClient implements IEffectorEnactor {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenDlvClient.class);
-
-    // This variables should go in a configuration file
-    private static final String HOST_NAME = "localhost";
-    private static final int PORT = 8082;
-    private final boolean replay = false;
-    // private final boolean simulation = false;
-    private final String replayerUrl = "http://localhost:8088/";
-    private final String cityReporterUrl = "http://localhost:8089/";
-
+    private MeConfig config;
     private final String vehicleId;
+
+    private String meHostName;
+    private int mePort;
+    private String replayerUrl;
+    private String cityUrl;
+    private boolean replay;
+    private boolean simulation;
 
     public OpenDlvClient(String vehicleId) {
 	super();
@@ -33,26 +33,38 @@ public class OpenDlvClient implements IEffectorEnactor {
     }
 
     @Override
+    public void setConfig(MeConfig config) {
+	this.config = config;
+	this.meHostName = this.config.getKsamConfig().getExecuterConfig().getMeHost();
+	this.mePort = this.config.getKsamConfig().getExecuterConfig().getMePort();
+	this.replayerUrl = "http://" + this.config.getKsamConfig().getReplayerHost() + ":"
+		+ this.config.getKsamConfig().getReplayerPort() + "/";
+	this.cityUrl = "http://" + this.config.getKsamConfig().getExecuterConfig().getCityReporterHost() + ":"
+		+ this.config.getKsamConfig().getExecuterConfig().getCityReporterPort() + "/";
+	this.simulation = this.config.getKsamConfig().isSimulation();
+
+    }
+
+    @Override
     public void enact(MonitorAdaptation a) {
 
-	if (!a.getMonitorsToAdd().isEmpty()) {
-	    if (a.getMonitorsToAdd().get(0).equals("heretraffic-trafficFactor_PATH2")) {
-		// SEND ADAPTATION TO CITYREPORTER SERVICE
-		ObjectMapper mapper = new ObjectMapper();
-		String jsonAdaptation;
-		try {
-		    jsonAdaptation = mapper.writeValueAsString(a);
-		    HttpHeaders httpHeaders = new HttpHeaders();
-		    httpHeaders.set("Content-Type", "application/json");
-		    HttpEntity<String> httpEntity = new HttpEntity<String>(jsonAdaptation, httpHeaders);
-		    RestTemplate restTemplate = new RestTemplate();
-		    LOGGER.info("OpenDlv enactor | send adaptation to cityreporter service - vehicleId" + vehicleId
-			    + " adaptation: change location parameter");
-		    restTemplate.postForObject(cityReporterUrl + "openDlvMonitorv" + vehicleId + "/adapt", httpEntity,
-			    String.class);
-		} catch (JsonProcessingException e) {
-		    e.printStackTrace();
-		}
+	if (!a.getParamsToAdapt().keySet().isEmpty()) {
+	    // SEND ADAPTATION TO CITYREPORTER SERVICE
+	    ObjectMapper mapper = new ObjectMapper();
+	    String jsonAdaptation;
+	    try {
+		jsonAdaptation = mapper.writeValueAsString(a);
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.set("Content-Type", "application/json");
+		HttpEntity<String> httpEntity = new HttpEntity<String>(jsonAdaptation, httpHeaders);
+		RestTemplate restTemplate = new RestTemplate();
+		LOGGER.info("OpenDlv enactor | send adaptation to cityreporter service - vehicleId" + vehicleId
+			+ " adaptation: change" + a.getParamsToAdapt().keySet().toString() + " parameter(s) to "
+			+ a.getParamsToAdapt().values().toString() + " respectively");
+		restTemplate.postForObject(cityUrl + "openDlvMonitorv" + vehicleId + "/adapt", httpEntity,
+			String.class);
+	    } catch (JsonProcessingException e) {
+		e.printStackTrace();
 	    }
 	} else {
 	    String dataString = "VehicleId:" + this.vehicleId
@@ -67,7 +79,7 @@ public class OpenDlvClient implements IEffectorEnactor {
 
 	    // if (!replay) {
 	    try {
-		Socket socket = new Socket(HOST_NAME, PORT);
+		Socket socket = new Socket(meHostName, mePort);
 		DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 		byte[] data = dataString.getBytes();
 		LOGGER.info("OpenDlv enactor | send adaptation to real vehicle - vehicleId" + vehicleId

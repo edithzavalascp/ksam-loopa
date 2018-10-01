@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 import org.ksam.model.analysisData.AnalysisAlert;
 import org.ksam.model.configuration.MeConfig;
-import org.ksam.model.configuration.SumConfig;
+import org.ksam.model.configuration.supportedvalues.SupportedAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,30 +27,30 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 	this.config = config;
 	this.techAlgorithms = new ArrayList<>();
 	this.accumMonAlert = new HashMap<>();
-	this.minAlerts = 3;
+	this.minAlerts = this.config.getKsamConfig().getAnalyzerConfig().getMinSymptoms();
 	this.isPlanRequired = false;
 	this.varsMonsToPlan = new HashMap<>();
 	this.faultyMonsIteration = new ArrayList<>();
 	this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques()
 		.forEach(tech -> tech.getAlgorithms().forEach(algorithm -> {
-
-		    String a0Name = this.getClass().getPackage().getName() + "." + tech.getTechId().toString()
-			    + algorithm.getAlgorithmId();
-		    try {
-			Class<?> clazz = Class.forName(a0Name);
-			IAnalysisMethod a0 = (IAnalysisMethod) clazz
-				.getConstructor(SumConfig.class, List.class, List.class)
-				.newInstance(this.config.getSystemUnderMonitoringConfig(),
-					algorithm.getAlgorithmParameters(), algorithm.getEvaluationParameters());
-			this.techAlgorithms.add(a0);
-		    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
-			    | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
-			    | SecurityException e) {
-			e.printStackTrace();
+		    if (algorithm.getAlgorithmId().equals(SupportedAlgorithm.JRip)) {
+			String a0Name = this.getClass().getPackage().getName() + "." + tech.getTechId().toString()
+				+ algorithm.getAlgorithmId();
+			try {
+			    Class<?> clazz = Class.forName(a0Name);
+			    IAnalysisMethod a0 = (IAnalysisMethod) clazz.getConstructor(MeConfig.class)
+				    .newInstance(this.config);
+			    this.techAlgorithms.add(a0);
+			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			    e.printStackTrace();
+			}
 		    }
 		}));
 	this.config.getSystemUnderMonitoringConfig().getSystemVariables().getMonitorVars().getMonitors()
 		.forEach(m -> this.accumMonAlert.put(m, 0));
+
     }
 
     @Override

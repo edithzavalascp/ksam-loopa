@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class AnalyzerConfiguration {
     private String problemId;
     private List<AnalysisTechnique> analysisTechniques;
+    private int minSymptoms;
+    private String tool;
+    private int toolPort;
 
     public String getProblemId() {
 	return problemId;
@@ -23,6 +26,30 @@ public class AnalyzerConfiguration {
 
     public void setAnalysisTechniques(List<AnalysisTechnique> analysisTechniques) {
 	this.analysisTechniques = analysisTechniques;
+    }
+
+    public int getMinSymptoms() {
+	return minSymptoms;
+    }
+
+    public void setMinSymptoms(int minSymptoms) {
+	this.minSymptoms = minSymptoms;
+    }
+
+    public int getToolPort() {
+	return toolPort;
+    }
+
+    public void setToolPort(int toolPort) {
+	this.toolPort = toolPort;
+    }
+
+    public String getTool() {
+	return tool;
+    }
+
+    public void setTool(String tool) {
+	this.tool = tool;
     }
 
 }

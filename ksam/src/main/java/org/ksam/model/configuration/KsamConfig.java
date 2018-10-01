@@ -16,6 +16,11 @@ public class KsamConfig {
     private PlannerConfiguration plannerConfig;
     private ExecuterConfiguration executerConfig;
     private KbConfiguration kbConfig;
+    private boolean simulation;
+    private boolean replay;
+    private String replayerHost;
+    private String replayerPort;
+    private boolean learning;
 
     public MonitorConfiguration getMonitorConfig() {
 	return monitorConfig;
@@ -55,6 +60,46 @@ public class KsamConfig {
 
     public void setKbConfig(KbConfiguration kbConfig) {
 	this.kbConfig = kbConfig;
+    }
+
+    public boolean isSimulation() {
+	return simulation;
+    }
+
+    public void setSimulation(boolean simulation) {
+	this.simulation = simulation;
+    }
+
+    public boolean isReplay() {
+	return replay;
+    }
+
+    public void setReplay(boolean replay) {
+	this.replay = replay;
+    }
+
+    public boolean isLearning() {
+	return learning;
+    }
+
+    public void setLearning(boolean learning) {
+	this.learning = learning;
+    }
+
+    public String getReplayerPort() {
+	return replayerPort;
+    }
+
+    public void setReplayerPort(String replayerPort) {
+	this.replayerPort = replayerPort;
+    }
+
+    public String getReplayerHost() {
+	return replayerHost;
+    }
+
+    public void setReplayerHost(String replayerHost) {
+	this.replayerHost = replayerHost;
     }
 
 }

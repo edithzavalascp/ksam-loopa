@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 
 import org.ksam.model.adaptation.MonitorAdaptation;
 import org.ksam.model.configuration.MeConfig;
-import org.ksam.model.configuration.SumConfig;
 import org.ksam.model.planData.PlanAlert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +27,7 @@ public class AlertsPlanner implements IPlannerOperation {
 			    + algorithm.getAlgorithmId();
 		    try {
 			Class<?> clazz = Class.forName(p0Name);
-			IPlanMethod p0 = (IPlanMethod) clazz.getConstructor(SumConfig.class, List.class, List.class)
-				.newInstance(this.config.getSystemUnderMonitoringConfig(),
-					algorithm.getAlgorithmParameters(), algorithm.getEvaluationParameters());
+			IPlanMethod p0 = (IPlanMethod) clazz.getConstructor(MeConfig.class).newInstance(this.config);
 			this.techAlgorithms.add(p0);
 		    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
 			    | IllegalArgumentException | InvocationTargetException | NoSuchMethodException

@@ -1,12 +1,8 @@
 package org.ksam.logic.autonomicmanager.configuration;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.ksam.model.configuration.AMConfiguration;
 import org.loopa.policy.IPolicy;
@@ -18,24 +14,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AmConfigurationManager {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
-
+    private final String filePath;
     private AMConfiguration config;
 
     public AmConfigurationManager(String amConfigFile) {
 	super();
 	ObjectMapper mapper = new ObjectMapper();
+	this.filePath = "/tmp/config/" + amConfigFile;
 	try {
-	    InputStream is = AmConfigurationManager.class.getResourceAsStream(amConfigFile);
-	    // LOGGER.info("" + is);
-	    StringBuilder textBuilder = new StringBuilder();
-	    try (Reader reader = new BufferedReader(
-		    new InputStreamReader(is, Charset.forName(StandardCharsets.UTF_8.name())))) {
-		int c = 0;
-		while ((c = reader.read()) != -1) {
-		    textBuilder.append((char) c);
-		}
-	    }
-	    this.config = mapper.readValue(textBuilder.toString(), AMConfiguration.class);
+	    // InputStream is =
+	    // AmConfigurationManager.class.getResourceAsStream(amConfigFile);
+	    // StringBuilder textBuilder = new StringBuilder();
+	    // try (Reader reader = new BufferedReader(
+	    // new InputStreamReader(is, Charset.forName(StandardCharsets.UTF_8.name())))) {
+	    // int c = 0;
+	    // while ((c = reader.read()) != -1) {
+	    // textBuilder.append((char) c);
+	    // }
+	    // }
+	    // this.config = mapper.readValue(textBuilder.toString(),
+	    // AMConfiguration.class);
+	    String data = new String(Files.readAllBytes(Paths.get(this.filePath)));
+	    this.config = mapper.readValue(data, AMConfiguration.class);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}

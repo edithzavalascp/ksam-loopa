@@ -7,5 +7,6 @@ services:
             - "8090:8080"
         volumes:
         - /home/revere/ezb/ksam_data/:/tmp/weka
+        - ~/git/ksam-loopa/ksam/config:/tmp/config
         network_mode: host
-        command: "/application.json --server.port=8090"
+        command: "application.json --server.port=8090"

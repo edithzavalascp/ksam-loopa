@@ -33,7 +33,8 @@ public class MEConfigurationManager {
 		"effector_" + config.getSystemUnderMonitoringConfig().getSystemId(),
 		Arrays.asList(AMMessageBodyType.ADAPTATION.toString()
 			+ config.getSystemUnderMonitoringConfig().getSystemId()),
-		new Effector(SupportedEnactors.enactors.get(config.getSystemUnderMonitoringConfig().getSystemId()))));
+		new Effector(config,
+			SupportedEnactors.enactors.get(config.getSystemUnderMonitoringConfig().getSystemId()))));
 
     }
 

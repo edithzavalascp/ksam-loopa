@@ -6,9 +6,10 @@ import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 public class PositionAnalysisManager {
-    private final boolean isLearning = true;
+    private final boolean isLearning;
 
-    public PositionAnalysisManager() {
+    public PositionAnalysisManager(Boolean isLearning) {
+	this.isLearning = isLearning;
     }
 
     public String getLatLon(String point) {

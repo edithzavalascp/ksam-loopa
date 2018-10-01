@@ -51,8 +51,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	LOGGER.info(this.getComponent().getElement().getElementId() + " | set configuration");
 	if (config.containsKey("meId")) {
 	    this.configs.put(config.get("meId"), Application.meConfigM.getConfigs().get(config.get("meId")));
-	    this.monOperations.put(config.get("meId"),
-		    new MonitorsChecker(this.configs.get(config.get("meId")).getSystemUnderMonitoringConfig()));
+	    this.monOperations.put(config.get("meId"), new MonitorsChecker(this.configs.get(config.get("meId"))));
 	    this.managerPolicy.update(new Policy(this.managerPolicy.getPolicyOwner(), config));
 	} else if (config.containsKey("newMinSymptoms")) {
 	    this.monOperations.get(config.get("systemId"))
@@ -66,8 +65,8 @@ public class MonitorFleManager implements IMonitorFleManager {
 	// LOGGER.info(this.getComponent().getElement().getElementId() + " | receive
 	// monitoring data");
 	this.monitorCalls.increment();
-	MonitoringData nomalizedData = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
-	sendMonDataToKB(nomalizedData);
+	MonitoringData monDataObj = this.monOperations.get(monData.get("systemId")).doMonitorOperation(monData);
+	sendMonDataToKB(monDataObj);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {
 	    LOGGER.info("Analysis is required");
 	    LOGGER.info("Symptomatic monitoring data: " + monData);
@@ -122,10 +121,10 @@ public class MonitorFleManager implements IMonitorFleManager {
 	}
     }
 
-    private void sendMonDataToKB(MonitoringData normalizedData) {
+    private void sendMonDataToKB(MonitoringData monDataObj) {
 	ObjectMapper mapper = new ObjectMapper();
 	try {
-	    String jsonNomalizedData = mapper.writeValueAsString(normalizedData);
+	    String jsonNomalizedData = mapper.writeValueAsString(monDataObj);
 	    LoopAElementMessageBody messageContent = new LoopAElementMessageBody(AMMessageBodyType.KB.toString(),
 		    jsonNomalizedData);
 	    messageContent.getMessageBody().put("contentType", "MonitoringData");
