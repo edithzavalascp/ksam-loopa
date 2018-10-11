@@ -12,8 +12,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.ksam.model.configuration.MeConfig;
 import org.ksam.model.configuration.monitors.Monitor;
-import org.ksam.model.configuration.monitors.MonitoringVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,22 +36,26 @@ public class WekaPersistenceManager {
 
     private final PositionPersistenceManager pm; // Specific to opendlv
 
-    public WekaPersistenceManager(String meId, Map<String, Monitor> monitors, List<String> persistenceMonitors,
-	    List<MonitoringVariable> monVars, List<String> contextVars) {
+    public WekaPersistenceManager(MeConfig config) {
 	super();
-	this.pm = new PositionPersistenceManager();
-	this.meId = meId;
+	this.pm = new PositionPersistenceManager(config);
+	this.meId = config.getSystemUnderMonitoringConfig().getSystemId();
 	// this.mvrT = new MonVarsRangesTranslator(monVars);
-	this.persistenceMonitors = persistenceMonitors;
+	this.persistenceMonitors = config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
+		.getPersistenceMonitors();
 	this.filePath = "/tmp/weka/" + this.meId + "_real.arff";
 	this.pMonsVarsRuntimeData = new HashMap<>();
-	this.monitors = monitors;
+	this.monitors = new HashMap<>();
+	config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors().forEach(m -> {
+	    monitors.put(m.getMonitorAttributes().getMonitorId(), m);
+	});
 	this.contextVarsValues = new HashMap<>();
-	contextVars.forEach(var -> this.contextVarsValues.put(var, "0"));
-	this.ctxPersister = new OpenDlvContextPersister(contextVars);
+	config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates()
+		.forEach(var -> this.contextVarsValues.put(var, "0"));
+	this.ctxPersister = new OpenDlvContextPersister(
+		config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates());
 	createHeader();
 	this.inactiveMons = new ArrayList<>();
-
 	this.dataToPersistInArff = PublishSubject.create();
 	this.dataToPersistInArff.subscribe(monVarData -> arffFilePersister.execute(() -> {
 	    this.pMonsVarsRuntimeData.forEach((k, v) -> {

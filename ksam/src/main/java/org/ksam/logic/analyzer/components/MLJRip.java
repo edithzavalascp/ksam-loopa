@@ -46,15 +46,23 @@ public class MLJRip implements IAnalysisMethod {
     private final String lfAlgorithm;
     private final String positionAlgorithm;
 
+    private final boolean parameterAdapt;
+    private final boolean isToolOn;
+
     public MLJRip(MeConfig config) {
 	super();
 	this.config = config;
+	this.isToolOn = this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0).isToolOn();
+	this.parameterAdapt = this.config.getKsamConfig().getAnalyzerConfig().getAdaptationSupported()
+		.contains("parameter");
 	this.lfAlgorithm = this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0)
 		.getAlgorithms().get(0).getAlgorithmId().toString();
 	this.positionAlgorithm = this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0)
 		.getAlgorithms().get(1).getAlgorithmId().toString();
 	this.simulation = this.config.getKsamConfig().isSimulation();
-	this.URL_WEKA = "http://localhost:" + this.config.getKsamConfig().getAnalyzerConfig().getToolPort() + "/";
+	this.URL_WEKA = "http://"
+		+ this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0).getToolHost() + ":"
+		+ this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0).getToolPort() + "/";
 	this.ctxAnalyzer = new OpenDlvContextAnalyzer(this.config.getSystemUnderMonitoringConfig());
 	// TODO select correspoding parameters by algorithm and technique id
 	this.lfAlgorithmParams = this.config.getKsamConfig().getAnalyzerConfig().getAnalysisTechniques().get(0)
@@ -97,272 +105,298 @@ public class MLJRip implements IAnalysisMethod {
 	switch (alertType) {
 	case MONITORFAULT:
 	    if (!dmDoneOnFault) {
-		try {
-		    // copy header
-		    Files.copy(
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_header.arff"),
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_jrip_predict_temp.arff"),
-			    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		    // Copy last available runtime data
-		    List<String> lines = Files
-			    .lines(Paths.get(
-				    homePath + this.config.getSystemUnderMonitoringConfig().getSystemId() + ".arff"))
-			    .collect(Collectors.toList());
-		    String toPred = "";
-		    for (int w = 0; w < WINDOW; w++) {
-			toPred += lines.get(lines.size() - 1) + "\n";
-		    }
-		    // Copy last available runtime data into file
-		    try {
-			File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				+ "_jrip_predict_temp.arff");
-			if (!file.exists()) {
-			    file.createNewFile();
+		if (!monitorId.equals("V2VCam_FrontCenter")) {
+		    boolean lfNeeded = true;
+		    String[] positions = null;
+		    if (this.isToolOn) {
+			try {
+			    // copy header
+			    Files.copy(
+				    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					    + "_header.arff"),
+				    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					    + "_jrip_predict_temp.arff"),
+				    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			    // Copy last available runtime data
+			    List<String> lines = Files
+				    .lines(Paths.get(homePath
+					    + this.config.getSystemUnderMonitoringConfig().getSystemId() + ".arff"))
+				    .collect(Collectors.toList());
+			    String toPred = "";
+			    for (int w = 0; w < WINDOW; w++) {
+				toPred += lines.get(lines.size() - 1) + "\n";
+			    }
+			    // Copy last available runtime data into file
+			    try {
+				File file = new File(
+					homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+						+ "_jrip_predict_temp.arff");
+				if (!file.exists()) {
+				    file.createNewFile();
+				}
+
+				FileWriter fileWritter = new FileWriter(file, true);
+				BufferedWriter output = new BufferedWriter(fileWritter);
+				output.write(toPred);
+				output.close();
+			    } catch (IOException e) {
+				e.printStackTrace();
+			    }
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
+			// Predict next vehicle position
+			RestTemplate restTemplate = new RestTemplate();
+			LOGGER.info("Analysis | send data to predict position");
+			ResponseEntity<String> response = restTemplate.getForEntity(
+				URL_WEKA + "/position/" + this.positionAlgorithm + "/" + WINDOW, String.class);
+			LOGGER.info("Analysis | receive position prediction");
+			// LOGGER.info(response.getBody());
+			// Load runtime data without predicted positions
+			DataSource sourcePredictJ = null;
+			Instances datasetPredictJ = null;
+			try {
+			    sourcePredictJ = new DataSource(
+				    homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					    + "_jrip_predict_temp.arff");
+			    datasetPredictJ = sourcePredictJ.getDataSet();
+			    datasetPredictJ.setClassIndex(datasetPredictJ.numAttributes() - 1);
+			} catch (Exception e) {
+			    e.printStackTrace();
+			}
+			// Substitute positions for predicted using weka library -- monitors names may
+			// change from one ME to another and from one environment to other.
+			// TODO Read them from config file.
+			positions = response.getBody().split(" ");
+			for (int i = 0; i < positions.length; i++) {
+			    String latlon = this.posMan.getLatLon(positions[i]);
+			    if (simulation) {
+				datasetPredictJ.instance(i).setValue(
+					datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+					Double.valueOf(latlon.split(",")[0]));
+				datasetPredictJ.instance(i).setValue(
+					datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+					Double.valueOf(latlon.split(",")[1]));
+			    } else {
+				datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
+					Double.valueOf(latlon.split(",")[0]));
+				datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
+					Double.valueOf(latlon.split(",")[1]));
+			    }
+			    datasetPredictJ.instance(i).setClassMissing();
 			}
 
-			FileWriter fileWritter = new FileWriter(file, true);
-			BufferedWriter output = new BufferedWriter(fileWritter);
-			output.write(toPred);
-			output.close();
-		    } catch (IOException e) {
-			e.printStackTrace();
-		    }
-		} catch (IOException e) {
-		    e.printStackTrace();
-		}
-		// Predict next vehicle position
-		RestTemplate restTemplate = new RestTemplate();
-		LOGGER.info("Analysis | send data to predict position");
-		ResponseEntity<String> response = restTemplate
-			.getForEntity(URL_WEKA + "/position/" + this.positionAlgorithm + "/" + WINDOW, String.class);
-		LOGGER.info("Analysis | receive position prediction");
-		// LOGGER.info(response.getBody());
-		// Load runtime data without predicted positions
-		DataSource sourcePredictJ = null;
-		Instances datasetPredictJ = null;
-		try {
-		    sourcePredictJ = new DataSource(homePath
-			    + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_jrip_predict_temp.arff");
-		    datasetPredictJ = sourcePredictJ.getDataSet();
-		    datasetPredictJ.setClassIndex(datasetPredictJ.numAttributes() - 1);
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-		// Substitute positions for predicted using weka library -- monitors names may
-		// change from one ME to another and from one environment to other.
-		// TODO Read them from config file.
-		String[] positions = response.getBody().split(" ");
-		for (int i = 0; i < positions.length; i++) {
-		    String latlon = this.posMan.getLatLon(positions[i]);
-		    if (simulation) {
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
-				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
-				Double.valueOf(latlon.split(",")[1]));
-		    } else {
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
-				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
-				Double.valueOf(latlon.split(",")[1]));
-		    }
-		    datasetPredictJ.instance(i).setClassMissing();
-		}
+			// Re-write file with predicted positions
+			try {
+			    Files.copy(
+				    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					    + "_header.arff"),
+				    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					    + "_jrip_predict.arff"),
+				    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			    String toWrite = "";
+			    for (int j = 0; j < datasetPredictJ.numInstances(); j++) {
+				toWrite += datasetPredictJ.instance(j) + "\n";
+			    }
+			    try {
+				File file = new File(
+					homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+						+ "_jrip_predict.arff");
+				if (!file.exists()) {
+				    file.createNewFile();
+				}
 
-		// Re-write file with predicted positions
-		try {
-		    Files.copy(
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_header.arff"),
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_jrip_predict.arff"),
-			    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		    String toWrite = "";
-		    for (int j = 0; j < datasetPredictJ.numInstances(); j++) {
-			toWrite += datasetPredictJ.instance(j) + "\n";
-		    }
-		    try {
-			File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				+ "_jrip_predict.arff");
-			if (!file.exists()) {
-			    file.createNewFile();
+				FileWriter fileWritter = new FileWriter(file, true);
+				BufferedWriter output = new BufferedWriter(fileWritter);
+				output.write(toWrite);
+				output.close();
+			    } catch (IOException e) {
+				e.printStackTrace();
+			    }
+			} catch (IOException e) {
+			    e.printStackTrace();
 			}
+			// Predict self-driving functionality usage
+			LOGGER.info("Analysis | send data to predict self-driving functionality usage");
+			ResponseEntity<String> responseLaneFollower = restTemplate.getForEntity(
+				URL_WEKA + "/" + this.config.getSystemUnderMonitoringConfig().getSystemId() + "/"
+					+ this.lfAlgorithm + "/" + WINDOW,
+				String.class);
+			LOGGER.info("Analysis | receive self-driving functionality usage prediction");
+			LOGGER.info("Analysis | Prediction " + responseLaneFollower.getBody().toString());
+			// LOGGER.info(responseLaneFollower.getBody());
+			// Check if self-driving is needed
+			String[] lfUsage = responseLaneFollower.getBody().split(" ");
 
-			FileWriter fileWritter = new FileWriter(file, true);
-			BufferedWriter output = new BufferedWriter(fileWritter);
-			output.write(toWrite);
-			output.close();
-		    } catch (IOException e) {
-			e.printStackTrace();
+			for (String pUsage : lfUsage) {
+			    if (pUsage.equals("1")) {
+				lfNeeded &= true;
+				this.adaptationNeeded.set(1);
+			    } else {
+				lfNeeded = false;
+				this.adaptationNeeded.set(0);
+			    }
+			}
 		    }
-		} catch (IOException e) {
-		    e.printStackTrace();
-		}
-		// Predict self-driving functionality usage
-		LOGGER.info("Analysis | send data to predict self-driving functionality usage");
-		ResponseEntity<String> responseLaneFollower = restTemplate
-			.getForEntity(URL_WEKA + "/" + this.config.getSystemUnderMonitoringConfig().getSystemId() + "/"
-				+ this.lfAlgorithm + "/" + WINDOW, String.class);
-		LOGGER.info("Analysis | receive self-driving functionality usage prediction");
-		LOGGER.info("Analysis | Prediction " + responseLaneFollower.getBody().toString());
-		// LOGGER.info(responseLaneFollower.getBody());
-		// Check if self-driving is needed
-		String[] lfUsage = responseLaneFollower.getBody().split(" ");
-		boolean lfNeeded = true;
-		for (String pUsage : lfUsage) {
-		    if (pUsage.equals("1")) {
-			lfNeeded &= true;
-			this.adaptationNeeded.set(1);
-		    } else {
-			lfNeeded = false;
-			this.adaptationNeeded.set(0);
-		    }
-		}
-
-		List<String> listAlternative = new ArrayList<>();
-		if (lfNeeded) {
-		    for (String monVar : this.monsVars.get(monitorId)) {
-			this.varsMons.get(monVar).forEach(m -> listAlternative.add(m));
-			listAlternative.remove(monitorId);
-			alternativeMons.put(monVar, listAlternative);
-		    }
-		    // Copy last available runtimedata
-		    try {
-			List<String> linesPost = Files.lines(Paths.get(
-				homePath + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
-				.collect(Collectors.toList());
-			LOGGER.info(
-				"Current data: " + linesPost.get(linesPost.size() - 1) + ", last predicted position: "
+		    // ***********************************************************************//
+		    List<String> listAlternative = new ArrayList<>();
+		    if (lfNeeded) {
+			for (String monVar : this.monsVars.get(monitorId)) {
+			    this.varsMons.get(monVar).forEach(m -> listAlternative.add(m));
+			    listAlternative.remove(monitorId);
+			    alternativeMons.put(monVar, listAlternative);
+			}
+			// Copy last available runtimedata
+			if (this.isToolOn) {
+			    try {
+				List<String> linesPost = Files.lines(Paths.get(homePath
+					+ this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
+					.collect(Collectors.toList());
+				LOGGER.info("Current data: " + linesPost.get(linesPost.size() - 1)
+					+ ", last predicted position: "
 					+ this.posMan.getLatLon(positions[positions.length - 1]));
-		    } catch (IOException e) {
-			e.printStackTrace();
+			    } catch (IOException e) {
+				e.printStackTrace();
+			    }
+			}
+			this.dmDoneOnFault = true;
 		    }
+
+		} else {
+		    List<String> listAlternative = new ArrayList<>();
+		    this.varsMons.get("trafficFactor").forEach(m -> listAlternative.add(m));
+		    listAlternative.remove(monitorId);
+		    alternativeMons.put("trafficFactor", listAlternative);
+		    // LOGGER.info(listAlternative.toString());
 		    this.dmDoneOnFault = true;
 		}
-
 	    }
 	    break;
 	case LOWBATTERYLEVEL:
 	    if (!dmDoneOnLowBattery) {
-		try {
-		    // copy header
-		    Files.copy(
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_header.arff"),
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_jrip_predict_temp.arff"),
-			    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		    // Copy last available runtime data
-		    List<String> lines = Files.lines(Paths
-			    .get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
-			    .collect(Collectors.toList());
-		    String toPred = "";
-		    for (int w = 0; w < WINDOW; w++) {
-			toPred += lines.get(lines.size() - 1) + "\n";
-		    }
-		    // Copy last available runtime data into file
-		    try {
-			File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				+ "_jrip_predict_temp.arff");
-			if (!file.exists()) {
-			    file.createNewFile();
-			}
-
-			FileWriter fileWritter = new FileWriter(file, true);
-			BufferedWriter output = new BufferedWriter(fileWritter);
-			output.write(toPred);
-			output.close();
-		    } catch (IOException e) {
-			e.printStackTrace();
-		    }
-		} catch (IOException e) {
-		    e.printStackTrace();
-		}
-		// Predict next vehicle position
-		RestTemplate restTemplate = new RestTemplate();
-		ResponseEntity<String> response = restTemplate
-			.getForEntity(URL_WEKA + "/position/" + this.positionAlgorithm + "/" + WINDOW, String.class);
-		// LOGGER.info(response.getBody());
-		// Load runtime data without predicted positions
-		DataSource sourcePredictJ = null;
-		Instances datasetPredictJ = null;
-		try {
-		    sourcePredictJ = new DataSource(homePath
-			    + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_jrip_predict_temp.arff");
-		    datasetPredictJ = sourcePredictJ.getDataSet();
-		    datasetPredictJ.setClassIndex(datasetPredictJ.numAttributes() - 1);
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-		// Substitute positions for predicted using weka library -- monitors names may
-		// change from one ME to another and from one environment to other.
-		// TODO Read them from config file.
-		String[] positions = response.getBody().split(" ");
-		for (int i = 0; i < positions.length; i++) {
-
-		    String latlon = this.posMan.getLatLon(positions[i]);
-		    if (simulation) {
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
-				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
-				Double.valueOf(latlon.split(",")[1]));
-		    } else {
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
-				Double.valueOf(latlon.split(",")[0]));
-			datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
-				Double.valueOf(latlon.split(",")[1]));
-		    }
-		    datasetPredictJ.instance(i).setClassMissing();
-		}
-
-		// Re-write file with predicted positions
-		try {
-		    Files.copy(
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_header.arff"),
-			    Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				    + "_jrip_predict.arff"),
-			    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-		    String toWrite = "";
-		    for (int j = 0; j < datasetPredictJ.numInstances(); j++) {
-			toWrite += datasetPredictJ.instance(j) + "\n";
-		    }
-		    try {
-			File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
-				+ "_jrip_predict.arff");
-			if (!file.exists()) {
-			    file.createNewFile();
-			}
-
-			FileWriter fileWritter = new FileWriter(file, true);
-			BufferedWriter output = new BufferedWriter(fileWritter);
-			output.write(toWrite);
-			output.close();
-		    } catch (IOException e) {
-			e.printStackTrace();
-		    }
-		} catch (IOException e) {
-		    e.printStackTrace();
-		}
-		// Predict self-driving functionality usage
-		ResponseEntity<String> responseLaneFollower = restTemplate
-			.getForEntity(URL_WEKA + "/" + this.config.getSystemUnderMonitoringConfig().getSystemId() + "/"
-				+ this.lfAlgorithm + "/" + WINDOW, String.class);
-		// LOGGER.info(responseLaneFollower.getBody());
-		// Check if self-driving is needed
-		String[] lfUsage = responseLaneFollower.getBody().split(" ");
 		boolean lfNeeded = true;
-		for (String pUsage : lfUsage) {
-		    if (pUsage.equals("1")) {
-			lfNeeded &= true;
-			this.adaptationNeeded.set(1);
-		    } else {
-			lfNeeded = false;
-			this.adaptationNeeded.set(0);
+		String[] positions = null;
+		if (this.isToolOn) {
+		    try {
+			// copy header
+			Files.copy(
+				Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					+ "_header.arff"),
+				Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					+ "_jrip_predict_temp.arff"),
+				java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			// Copy last available runtime data
+			List<String> lines = Files.lines(Paths.get(
+				homePath + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
+				.collect(Collectors.toList());
+			String toPred = "";
+			for (int w = 0; w < WINDOW; w++) {
+			    toPred += lines.get(lines.size() - 1) + "\n";
+			}
+			// Copy last available runtime data into file
+			try {
+			    File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+				    + "_jrip_predict_temp.arff");
+			    if (!file.exists()) {
+				file.createNewFile();
+			    }
+
+			    FileWriter fileWritter = new FileWriter(file, true);
+			    BufferedWriter output = new BufferedWriter(fileWritter);
+			    output.write(toPred);
+			    output.close();
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
+		    } catch (IOException e) {
+			e.printStackTrace();
+		    }
+		    // Predict next vehicle position
+		    RestTemplate restTemplate = new RestTemplate();
+		    ResponseEntity<String> response = restTemplate.getForEntity(
+			    URL_WEKA + "/position/" + this.positionAlgorithm + "/" + WINDOW, String.class);
+		    // LOGGER.info(response.getBody());
+		    // Load runtime data without predicted positions
+		    DataSource sourcePredictJ = null;
+		    Instances datasetPredictJ = null;
+		    try {
+			sourcePredictJ = new DataSource(
+				homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					+ "_jrip_predict_temp.arff");
+			datasetPredictJ = sourcePredictJ.getDataSet();
+			datasetPredictJ.setClassIndex(datasetPredictJ.numAttributes() - 1);
+		    } catch (Exception e) {
+			e.printStackTrace();
+		    }
+		    // Substitute positions for predicted using weka library -- monitors names may
+		    // change from one ME to another and from one environment to other.
+		    // TODO Read them from config file.
+		    positions = response.getBody().split(" ");
+		    for (int i = 0; i < positions.length; i++) {
+
+			String latlon = this.posMan.getLatLon(positions[i]);
+			if (simulation) {
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("imuodsimcvehicle-latitude"),
+				    Double.valueOf(latlon.split(",")[0]));
+			    datasetPredictJ.instance(i).setValue(
+				    datasetPredictJ.attribute("imuodsimcvehicle-longitude"),
+				    Double.valueOf(latlon.split(",")[1]));
+			} else {
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-latitude"),
+				    Double.valueOf(latlon.split(",")[0]));
+			    datasetPredictJ.instance(i).setValue(datasetPredictJ.attribute("applanixGps-longitude"),
+				    Double.valueOf(latlon.split(",")[1]));
+			}
+			datasetPredictJ.instance(i).setClassMissing();
+		    }
+
+		    // Re-write file with predicted positions
+		    try {
+			Files.copy(
+				Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					+ "_header.arff"),
+				Paths.get(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+					+ "_jrip_predict.arff"),
+				java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			String toWrite = "";
+			for (int j = 0; j < datasetPredictJ.numInstances(); j++) {
+			    toWrite += datasetPredictJ.instance(j) + "\n";
+			}
+			try {
+			    File file = new File(homePath + this.config.getSystemUnderMonitoringConfig().getSystemId()
+				    + "_jrip_predict.arff");
+			    if (!file.exists()) {
+				file.createNewFile();
+			    }
+
+			    FileWriter fileWritter = new FileWriter(file, true);
+			    BufferedWriter output = new BufferedWriter(fileWritter);
+			    output.write(toWrite);
+			    output.close();
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
+		    } catch (IOException e) {
+			e.printStackTrace();
+		    }
+		    // Predict self-driving functionality usage
+		    ResponseEntity<String> responseLaneFollower = restTemplate
+			    .getForEntity(URL_WEKA + "/" + this.config.getSystemUnderMonitoringConfig().getSystemId()
+				    + "/" + this.lfAlgorithm + "/" + WINDOW, String.class);
+		    // LOGGER.info(responseLaneFollower.getBody());
+		    // Check if self-driving is needed
+		    String[] lfUsage = responseLaneFollower.getBody().split(" ");
+		    lfNeeded = true;
+		    for (String pUsage : lfUsage) {
+			if (pUsage.equals("1")) {
+			    lfNeeded &= true;
+			    this.adaptationNeeded.set(1);
+			} else {
+			    lfNeeded = false;
+			    this.adaptationNeeded.set(0);
+			}
 		    }
 		}
-
 		if (lfNeeded) {
 		    List<String> reqVars = this.ctxAnalyzer.getRequiredVars("laneFollower");
 		    LOGGER.info("Required variables: " + reqVars);
@@ -371,17 +405,18 @@ public class MLJRip implements IAnalysisMethod {
 			    alternativeMons.put(k, v);
 			}
 		    });
-
-		    // Copy last available runtimedata
-		    try {
-			List<String> linesPost = Files.lines(Paths.get(
-				homePath + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
-				.collect(Collectors.toList());
-			LOGGER.info(
-				"Current data: " + linesPost.get(linesPost.size() - 1) + ", last predicted position: "
-					+ this.posMan.getLatLon(positions[positions.length - 1]));
-		    } catch (IOException e) {
-			e.printStackTrace();
+		    if (this.isToolOn) {
+			// Copy last available runtimedata
+			try {
+			    List<String> linesPost = Files.lines(Paths.get(homePath
+				    + this.config.getSystemUnderMonitoringConfig().getSystemId() + "_real.arff"))
+				    .collect(Collectors.toList());
+			    LOGGER.info("Current data: " + linesPost.get(linesPost.size() - 1)
+				    + ", last predicted position: "
+				    + this.posMan.getLatLon(positions[positions.length - 1]));
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
 		    }
 		    this.dmDoneOnLowBattery = true;
 		}
@@ -396,7 +431,15 @@ public class MLJRip implements IAnalysisMethod {
 	    }
 	    break;
 	case ROADEVENT:
-	    alternativeMons.put("trafficFactor", null);
+	    if (this.parameterAdapt) {
+		alternativeMons.put("trafficFactor", null);
+	    } else {
+		List<String> listAlternative = new ArrayList<>();
+		this.varsMons.get("trafficFactor").forEach(m -> listAlternative.add(m));
+		listAlternative.remove("heretraffic");
+		// LOGGER.info(listAlternative.toString());
+		alternativeMons.put("trafficFactor", listAlternative);
+	    }
 	    break;
 	default:
 	    break;

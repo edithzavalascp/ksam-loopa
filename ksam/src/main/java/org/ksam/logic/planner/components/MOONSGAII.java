@@ -69,6 +69,7 @@ public class MOONSGAII implements IPlanMethod {
 
 	switch (planAlert.getAlertType()) {
 	case MONITORFAULT:
+	    LOGGER.info(planAlert.getAffectedVarsAlternativeMons().toString());
 	    MonitorAdaptation adapt = new MonitorAdaptation();
 	    List<String> monitorsToAdd = new ArrayList<>();
 	    // List<String> monitorsToRemove = new ArrayList<>(); //Don't remove faulty
@@ -102,6 +103,16 @@ public class MOONSGAII implements IPlanMethod {
 	    }
 	    adapt.setMonitorsToAdd(monitorsToAdd);
 	    adapt.setMonitorsToRemove(new ArrayList<>());
+	    if (!monitorsToAdd.isEmpty()) {
+		if (adapt.getMonitorsToAdd().get(0).equals("heretraffic")) {
+		    if (this.activeMonitors.contains("V2VCam_FrontCenter")) {
+			adapt.getMonitorsToRemove().add("V2VCam_FrontCenter");
+			this.activeMonitors.remove("V2VCam_FrontCenter");
+			this.monitorMetrics.get("V2VCam_FrontCenter").set(0);
+		    }
+		}
+	    }
+	    adapt.setParamsToAdapt(new HashMap<>());
 	    adaptations.add(adapt);
 	    break;
 	case LOWBATTERYLEVEL:
@@ -123,6 +134,7 @@ public class MOONSGAII implements IPlanMethod {
 		if (!entry.getValue().isEmpty()) {
 
 		    String minCostMonId = entry.getValue().get(0);
+		    allMonitors.remove(minCostMonId);
 		    for (String m : entry.getValue()) {
 			minCostMonId = this.monsCost.get(m) < this.monsCost.get(minCostMonId) ? m : minCostMonId;
 			allMonitors.remove(m);
@@ -132,6 +144,7 @@ public class MOONSGAII implements IPlanMethod {
 			monitorsToAddB.add(minCostMonId);
 			this.activeMonitors.add(minCostMonId);
 			this.monitorMetrics.get(minCostMonId).set(1);
+			LOGGER.info("add " + minCostMonId);
 		    }
 		    //////////////////////////////////////////////////////////
 		    entry.getValue().remove(minCostMonId);
@@ -141,10 +154,12 @@ public class MOONSGAII implements IPlanMethod {
 			    monitorsToRemoveB.add(mId);
 			    this.activeMonitors.remove(mId);
 			    this.monitorMetrics.get(mId).set(0);
+			    LOGGER.info("remove " + mId);
 			}
 		    }
 		}
 	    }
+	    LOGGER.info(allMonitors.toString());
 	    /** REMOVE ALL MONITORS THAT ARE NOT ASSOCIATED TO REQUIRED VARIABLES **/
 	    // LOGGER.info(allMonitors.toString());
 	    allMonitors.forEach(monNoReq -> {
@@ -152,10 +167,15 @@ public class MOONSGAII implements IPlanMethod {
 		    monitorsToRemoveB.add(monNoReq);
 		    this.activeMonitors.remove(monNoReq);
 		    this.monitorMetrics.get(monNoReq).set(0);
+		    LOGGER.info("not require remove: " + monNoReq);
 		}
 	    });
+
+	    LOGGER.info("to add: " + monitorsToAddB.toString());
+	    LOGGER.info("to remove: " + monitorsToRemoveB.toString());
 	    adaptB.setMonitorsToAdd(monitorsToAddB);
 	    adaptB.setMonitorsToRemove(monitorsToRemoveB);
+	    adaptB.setParamsToAdapt(new HashMap<>());
 	    adaptations.add(adaptB);
 	    break;
 	case MONITORECOVERED:
@@ -184,6 +204,7 @@ public class MOONSGAII implements IPlanMethod {
 	    }
 	    adaptR.setMonitorsToAdd(new ArrayList<>());
 	    adaptR.setMonitorsToRemove(monitorsToRemove);
+	    adaptR.setParamsToAdapt(new HashMap<>());
 	    adaptations.add(adaptR);
 	    break;
 	case ROADEVENT:
@@ -191,10 +212,30 @@ public class MOONSGAII implements IPlanMethod {
 	    adaptROAD.setAdaptId("ROADEVENT");
 	    adaptROAD.setMonitorsToAdd(new ArrayList<>());
 	    adaptROAD.setMonitorsToRemove(new ArrayList<>());
+	    adaptROAD.setParamsToAdapt(new HashMap<>());
+
 	    // Decide how to adapt
-	    Map<String, String> paramsToAdapt = new HashMap<>();
-	    paramsToAdapt.put("traffic-frequency", "1000"); // E.g., reduce traffic factor monitoring frequency
-	    adaptROAD.setParamsToAdapt(paramsToAdapt);
+	    if (planAlert.getAffectedVarsAlternativeMons().get("trafficFactor") == null) {
+		adaptROAD.getParamsToAdapt().put("traffic-frequency", "100"); // E.g., reduce traffic factor monitoring
+		// frequency
+	    } else {
+		// adaptROAD.getMonitorsToAdd()
+		// .add(planAlert.getAffectedVarsAlternativeMons().get("trafficFactor").get(0));
+		if (!this.activeMonitors
+			.contains(planAlert.getAffectedVarsAlternativeMons().get("trafficFactor").get(0))) {
+		    adaptROAD.getMonitorsToAdd()
+			    .add(planAlert.getAffectedVarsAlternativeMons().get("trafficFactor").get(0));
+		    this.activeMonitors.add(planAlert.getAffectedVarsAlternativeMons().get("trafficFactor").get(0));
+		    this.monitorMetrics.get(planAlert.getAffectedVarsAlternativeMons().get("trafficFactor").get(0))
+			    .set(1);
+		}
+		// adaptROAD.getMonitorsToRemove().add("heretraffic");
+		if (this.activeMonitors.contains("heretraffic")) {
+		    adaptROAD.getMonitorsToRemove().add("heretraffic");
+		    this.activeMonitors.remove("heretraffic");
+		    this.monitorMetrics.get("heretraffic").set(0);
+		}
+	    }
 	    adaptations.add(adaptROAD);
 	    break;
 	default:

@@ -52,7 +52,8 @@ public class AlertsPlanner implements IPlannerOperation {
     public List<MonitorAdaptation> getAdaptationsPlanned() {
 	List<MonitorAdaptation> adaptationsIteration = new ArrayList<>();
 	this.adaptations.forEach(adaptation -> {
-	    if (!adaptation.getMonitorsToAdd().isEmpty() || !adaptation.getMonitorsToRemove().isEmpty()) {
+	    if (!adaptation.getMonitorsToAdd().isEmpty() || !adaptation.getMonitorsToRemove().isEmpty()
+		    || !adaptation.getParamsToAdapt().isEmpty()) {
 		adaptationsIteration.add(adaptation);
 	    }
 	});

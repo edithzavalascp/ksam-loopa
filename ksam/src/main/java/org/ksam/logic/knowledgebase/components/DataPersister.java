@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ksam.model.configuration.MeConfig;
-import org.ksam.model.configuration.monitors.Monitor;
 import org.ksam.model.configuration.monitors.VariableValueCharacteristics;
 import org.ksam.model.monitoringData.RuntimeMonitorData;
 import org.slf4j.Logger;
@@ -37,17 +36,7 @@ public class DataPersister implements IKbOperation {
 	this.varsCh = new HashMap<>();
 	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitoringVars()
 		.forEach(var -> varsCh.put(var.getVarId(), var.getValueCharacteristics()));
-	Map<String, Monitor> monitors = new HashMap<>();
-	this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors()
-		.forEach(m -> {
-		    monitors.put(m.getMonitorAttributes().getMonitorId(), m);
-		});
-	this.wekaM = new WekaPersistenceManager(this.config.getSystemUnderMonitoringConfig().getSystemId(), monitors,
-		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
-			.getPersistenceMonitors(),
-		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
-			.getMonitoringVars(),
-		this.config.getSystemUnderMonitoringConfig().getSystemVariables().getContextVars().getStates());
+	this.wekaM = new WekaPersistenceManager(this.config);
 	this.activeMonitors = this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig()
 		.getInitialActiveMonitors();
 	this.wekaM.updateActiveMonitors(this.activeMonitors);

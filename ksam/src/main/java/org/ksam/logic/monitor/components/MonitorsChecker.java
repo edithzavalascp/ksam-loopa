@@ -61,7 +61,7 @@ public class MonitorsChecker implements IMonitorOperation {
 	this.batteryLevelI = new BatteryLevelInspector(
 		this.config.getSystemUnderMonitoringConfig().getSystemConfiguration().getMonitorConfig().getMonitors(),
 		this.config.getSystemUnderMonitoringConfig().getSystemId(),
-		this.config.getKsamConfig().getMonitorConfig().getInitBatteryLevele(),
+		this.config.getKsamConfig().getMonitorConfig().getInitBatteryLevel(),
 		this.config.getKsamConfig().getMonitorConfig().isReduceBattery(),
 		this.config.getKsamConfig().getMonitorConfig().getBatteryLimit());
 	// this.faultyMonitor = new HashMap<>();

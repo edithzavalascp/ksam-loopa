@@ -67,6 +67,41 @@ public class OpenDlvClient implements IEffectorEnactor {
 		e.printStackTrace();
 	    }
 	} else {
+	    if (a.getMonitorsToAdd().contains("heretraffic") || a.getMonitorsToRemove().contains("heretraffic")
+		    || a.getMonitorsToAdd().contains("openweathermap")
+		    || a.getMonitorsToRemove().contains("openweathermap")) {
+		// SEND ADAPTATION TO CITYREPORTER SERVICE
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonAdaptation;
+		try {
+		    jsonAdaptation = mapper.writeValueAsString(a);
+		    HttpHeaders httpHeaders = new HttpHeaders();
+		    httpHeaders.set("Content-Type", "application/json");
+		    HttpEntity<String> httpEntity = new HttpEntity<String>(jsonAdaptation, httpHeaders);
+		    RestTemplate restTemplate = new RestTemplate();
+		    LOGGER.info("OpenDlv enactor | send adaptation to cityreporter service - vehicleId" + vehicleId
+			    + " adaptation: add/remove service");
+		    restTemplate.postForObject(cityUrl + "openDlvMonitorv" + vehicleId + "/adapt", httpEntity,
+			    String.class);
+		} catch (JsonProcessingException e) {
+		    e.printStackTrace();
+		}
+		if (a.getMonitorsToAdd().contains("heretraffic")) {
+		    a.getMonitorsToAdd().remove("heretraffic");
+		}
+
+		if (a.getMonitorsToRemove().contains("heretraffic")) {
+		    a.getMonitorsToRemove().remove("heretraffic");
+		}
+		if (a.getMonitorsToAdd().contains("openweathermap")) {
+		    a.getMonitorsToAdd().remove("openweathermap");
+		}
+
+		if (a.getMonitorsToRemove().contains("openweathermap")) {
+		    a.getMonitorsToRemove().remove("openweathermap");
+		}
+	    }
+
 	    String dataString = "VehicleId:" + this.vehicleId
 		    + (!a.getMonitorsToAdd().isEmpty()
 			    ? ";MonitorsToAdd:" + a.getMonitorsToAdd().toString()

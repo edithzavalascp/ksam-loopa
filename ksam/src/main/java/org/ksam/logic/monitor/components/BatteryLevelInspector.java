@@ -19,12 +19,12 @@ public class BatteryLevelInspector {
     private Map<String, Double> monitorsCost;
     private DoubleAdder batteryLevel;
 
-    public BatteryLevelInspector(List<Monitor> monitors, String systemId, int initBatteryLevele, boolean reduceBattery,
-	    double batteryLimit) {
+    public BatteryLevelInspector(List<Monitor> monitors, String systemId, double initBatteryLevel,
+	    boolean reduceBattery, double batteryLimit) {
 	this.monitorsCost = new HashMap<>();
 	String metricName = "ksam.me." + systemId + ".monitor.batterylevelsensor.variable.batterylevel";
 	batteryLevel = Metrics.gauge(metricName, new DoubleAdder());
-	batteryLevel.add(initBatteryLevele);
+	batteryLevel.add(initBatteryLevel);
 	monitors.forEach(monitor -> this.monitorsCost.put(monitor.getMonitorAttributes().getMonitorId(),
 		monitor.getMonitorAttributes().getCost().getValue()));
 	this.reduceBattery = reduceBattery;

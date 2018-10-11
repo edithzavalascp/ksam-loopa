@@ -58,7 +58,8 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 
 	switch (analysisAlert.getAlertType()) {
 	case MONITORFAULT:
-	    LOGGER.info("AlertsAnalyzer | Faulty monitors: " + analysisAlert.getFaultyMonitors().toString());
+	    LOGGER.info(
+		    "AlertsAnalyzer | Faulty (or unuseful) monitors: " + analysisAlert.getFaultyMonitors().toString());
 	    analysisAlert.getFaultyMonitors().forEach(faultym -> {
 		this.accumMonAlert.put(faultym, this.accumMonAlert.get(faultym) + 1);
 		if (this.accumMonAlert.get(faultym) == minAlerts) {
@@ -85,7 +86,7 @@ public class AlertsAnalyzer implements IAnalyzerOperation {
 	    });
 	    break;
 	case ROADEVENT:
-	    LOGGER.info("AlertsAnalyzer | Path changes due to a ROADEVENT (CRASH)");
+	    LOGGER.info("AlertsAnalyzer | ROADEVENT (CRASH)");
 	    this.varsMonsToPlan = this.techAlgorithms.get(0).doAnalysis(null, analysisAlert.getAlertType());
 	    break;
 	default:

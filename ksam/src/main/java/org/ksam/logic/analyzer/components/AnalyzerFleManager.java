@@ -75,6 +75,8 @@ public class AnalyzerFleManager implements IAnalyzerFleManager {
 		    pa.setAffectedVarsAlternativeMons(
 			    this.analysisOperations.get(data.getSystemId()).getVarsMonsToPlan());
 		    sendAnalysisDataToPlan(pa);
+		} else {
+		    LOGGER.info(this.getComponent().getElement().getElementId() + " | no plan required");
 		}
 	    } catch (IOException e) {
 		e.printStackTrace();

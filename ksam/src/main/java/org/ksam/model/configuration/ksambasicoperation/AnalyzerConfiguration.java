@@ -9,8 +9,7 @@ public class AnalyzerConfiguration {
     private String problemId;
     private List<AnalysisTechnique> analysisTechniques;
     private int minSymptoms;
-    private String tool;
-    private int toolPort;
+    private List<String> adaptationSupported;
 
     public String getProblemId() {
 	return problemId;
@@ -36,20 +35,12 @@ public class AnalyzerConfiguration {
 	this.minSymptoms = minSymptoms;
     }
 
-    public int getToolPort() {
-	return toolPort;
+    public List<String> getAdaptationSupported() {
+	return adaptationSupported;
     }
 
-    public void setToolPort(int toolPort) {
-	this.toolPort = toolPort;
-    }
-
-    public String getTool() {
-	return tool;
-    }
-
-    public void setTool(String tool) {
-	this.tool = tool;
+    public void setAdaptationSupported(List<String> adaptationSupported) {
+	this.adaptationSupported = adaptationSupported;
     }
 
 }

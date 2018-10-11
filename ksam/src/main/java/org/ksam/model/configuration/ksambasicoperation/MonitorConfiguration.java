@@ -10,7 +10,7 @@ public class MonitorConfiguration {
     private List<String> monOperations;
     private int frequency;
     private int minSymptoms;
-    private int initBatteryLevele;
+    private double initBatteryLevel;
     private boolean reduceBattery;
     private double batteryLimit;
 
@@ -46,14 +46,6 @@ public class MonitorConfiguration {
 	this.minSymptoms = minSymptoms;
     }
 
-    public int getInitBatteryLevele() {
-	return initBatteryLevele;
-    }
-
-    public void setInitBatteryLevele(int initBatteryLevele) {
-	this.initBatteryLevele = initBatteryLevele;
-    }
-
     public boolean isReduceBattery() {
 	return reduceBattery;
     }
@@ -68,6 +60,14 @@ public class MonitorConfiguration {
 
     public void setBatteryLimit(double batteryLimit) {
 	this.batteryLimit = batteryLimit;
+    }
+
+    public double getInitBatteryLevel() {
+	return initBatteryLevel;
+    }
+
+    public void setInitBatteryLevel(double initBatteryLevel) {
+	this.initBatteryLevel = initBatteryLevel;
     }
 
 }

@@ -69,7 +69,7 @@ public class MonitorFleManager implements IMonitorFleManager {
 	sendMonDataToKB(monDataObj);
 	if (this.monOperations.get(monData.get("systemId")).isAnalysisRequired()) {
 	    LOGGER.info("Analysis is required");
-	    LOGGER.info("Symptomatic monitoring data: " + monData);
+	    // LOGGER.info("Symptomatic monitoring data: " + monData);
 	    List<String> fm = this.monOperations.get(monData.get("systemId")).getFaultyMonitors();
 	    if (!fm.isEmpty()) {
 		AnalysisAlert aa = new AnalysisAlert();
