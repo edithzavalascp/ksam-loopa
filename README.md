@@ -2,9 +2,9 @@
 (**K**nowledge-driven **S**elf-**A**daptive **M**onitoring)
 
 ### Description:
-An implementation of the LoopA framework (https://github.com/edithzavala/loopa) for supporting the adaptation of MAPE-K Monitors.
+An implementation of the HAFLoop framework (https://github.com/edithzavala/loopa) for supporting the adaptation of MAPE-K Monitors in self-*adaptive systems.
 
-This implementation of KSAM is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+This implementation of is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 ### Getting started:
 - Install docker (https://www.docker.com/)
