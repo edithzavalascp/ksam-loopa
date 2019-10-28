@@ -2,7 +2,7 @@
 (**K**nowledge-driven **S**elf-**A**daptive **M**onitoring)
 
 ### Description:
-An implementation of the HAFLoop framework (https://github.com/edithzavala/loopa) for supporting the adaptation of MAPE-K Monitors in self-*adaptive systems.
+An implementation of an adaptive feedback MAPE-K loop using the HAFLoop framework (https://github.com/edithzavala/loopa).
 
 This implementation of is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
